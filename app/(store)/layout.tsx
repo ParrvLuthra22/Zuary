@@ -1,9 +1,10 @@
 import { CartSheet } from "@/components/commerce/CartSheet";
 import { Footer } from "@/components/layout/Footer";
 import { Nav } from "@/components/layout/Nav";
-import { PageTransition } from "@/components/motion/PageTransition";
-import { SmoothScroll } from "@/components/motion/SmoothScroll";
-import { TrouserCursor } from "@/components/motion/TrouserCursor";
+
+/* SmoothScroll, ScrollTriggerProvider, PageTransition and TrouserCursor are
+   mounted once in the root layout — mounting them here too would give Lenis
+   two instances and run the sweep twice. */
 
 export default function StoreLayout({
   children,
@@ -11,14 +12,11 @@ export default function StoreLayout({
   children: React.ReactNode;
 }) {
   return (
-    <SmoothScroll>
-      <TrouserCursor />
+    <>
       <Nav />
-      <div className="min-h-screen pt-16">
-        <PageTransition>{children}</PageTransition>
-      </div>
+      <div className="min-h-screen pt-16">{children}</div>
       <Footer />
       <CartSheet />
-    </SmoothScroll>
+    </>
   );
 }

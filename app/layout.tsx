@@ -2,6 +2,10 @@ import type { Metadata, Viewport } from "next";
 import { Eczar, Inter, Inter_Tight, JetBrains_Mono } from "next/font/google";
 
 import { ThemeProvider } from "@/components/layout/ThemeProvider";
+import { PageTransition } from "@/components/motion/PageTransition";
+import { ScrollTriggerProvider } from "@/components/motion/ScrollTriggerProvider";
+import { SmoothScroll } from "@/components/motion/SmoothScroll";
+import { TrouserCursor } from "@/components/motion/TrouserCursor";
 import { Toaster } from "@/components/ui/sonner";
 
 import "./globals.css";
@@ -78,7 +82,14 @@ export default function RootLayout({
     >
       <body className="antialiased">
         <ThemeProvider>
-          <main>{children}</main>
+          <SmoothScroll>
+            <ScrollTriggerProvider>
+              <PageTransition>
+                <main>{children}</main>
+              </PageTransition>
+            </ScrollTriggerProvider>
+          </SmoothScroll>
+          <TrouserCursor />
           <Toaster />
         </ThemeProvider>
       </body>

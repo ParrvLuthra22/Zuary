@@ -1,11 +1,9 @@
 import { CartSheet } from "@/components/commerce/CartSheet";
 import { Nav } from "@/components/layout/Nav";
-import { SmoothScroll } from "@/components/motion/SmoothScroll";
-import { TrouserCursor } from "@/components/motion/TrouserCursor";
 
 /**
  * No footer, no page padding — the cinematic group runs edge to edge and lets
- * each page own the full viewport.
+ * each page own the full viewport. The motion layer lives in the root layout.
  */
 export default function CinematicLayout({
   children,
@@ -13,11 +11,10 @@ export default function CinematicLayout({
   children: React.ReactNode;
 }) {
   return (
-    <SmoothScroll>
-      <TrouserCursor />
+    <>
       <Nav />
       <div className="bg-bg-deep">{children}</div>
       <CartSheet />
-    </SmoothScroll>
+    </>
   );
 }

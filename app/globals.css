@@ -191,6 +191,56 @@ html.lenis body {
   color: var(--carbon);
 }
 
+/* The native cursor is hidden below, so keyboard focus has to be unmistakable.
+   `:where()` keeps specificity at zero, letting shadcn's own focus-visible
+   rings override this on the components that ship one. Never put this inside a
+   media query — focus must be visible on every device. */
+:where(a, button, [role="button"], input, textarea, select, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* The trouser cursor replaces the native one, but only where it actually
+   renders: a fine pointer, and no reduced-motion preference. */
+@media (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  html {
+    cursor: none;
+  }
+
+  a,
+  button,
+  [role="button"] {
+    cursor: none;
+  }
+
+  /* Anything you type into keeps a caret — the cursor hides itself there. */
+  input,
+  textarea,
+  [contenteditable="true"],
+  [data-cursor="text"] {
+    cursor: text;
+  }
+
+  /* Native controls keep whatever cursor the platform gives them. Picking from
+     a select or dragging a range with no visible pointer is unusable. */
+  select,
+  option,
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="range"],
+  input[type="file"],
+  input[type="color"],
+  input[type="date"],
+  input[type="time"],
+  input[type="datetime-local"],
+  input[type="month"],
+  input[type="week"],
+  ::-webkit-calendar-picker-indicator {
+    cursor: auto;
+  }
+}
+
 @layer components {
   .t-display-xl {
     font-family: var(--font-display), system-ui, sans-serif;
