@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Image from "next/image";
 
 import { RevealText } from "@/components/motion/RevealText";
-import { HeroScrub } from "@/components/sections/HeroScrub";
 import { Marquee } from "@/components/sections/Marquee";
 import { MaskedScrollSection } from "@/components/sections/MaskedScrollSection";
 import { ProductRail } from "@/components/sections/ProductRail";
@@ -19,11 +18,13 @@ export default function DropsPage() {
 
   return (
     <>
-      <HeroScrub sequence="trouser" frameCount={60}>
+      {/* HeroScrub carries the homepage's own choreography, so the drop page
+          keeps a plain full-viewport opener of its own. */}
+      <header className="flex h-svh flex-col items-center justify-center px-6 text-center">
         <p className="t-label text-accent">{currentDrop.season}</p>
         <h1 className="t-display-xl mt-4">{currentDrop.title}</h1>
         <p className="t-label mt-6 text-fg-muted">{currentDrop.tagline}</p>
-      </HeroScrub>
+      </header>
 
       <section className="px-6 py-28 md:px-12">
         <RevealText as="h2" className="t-display-md max-w-3xl">

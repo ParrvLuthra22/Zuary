@@ -36,6 +36,9 @@ const eczar = Eczar({
   subsets: ["devanagari"],
   weight: ["500"],
   display: "swap",
+  // Devanagari never appears above the fold — preloading it puts ~44 KB of
+  // high-priority weight in front of the text that does.
+  preload: false,
 });
 
 export const metadata: Metadata = {

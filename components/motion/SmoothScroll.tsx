@@ -1,8 +1,6 @@
 "use client";
 
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import Lenis from "lenis";
+import type Lenis from "lenis";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 
 import { useUIStore } from "@/stores/ui";
@@ -38,33 +36,53 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    const instance = new Lenis({
-      duration: 1.1,
-      easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      smoothWheel: true,
-      // Touch keeps native scrolling — smoothing it fights the OS.
-      syncTouch: false,
-      // GSAP's ticker drives the loop instead, so the two never run out of step.
-      autoRaf: false,
-    });
+    let disposed = false;
+    let cleanup: (() => void) | undefined;
 
-    lenisRef.current = instance;
-    setLenis(instance);
+    // GSAP + ScrollTrigger are ~100 KB and nothing needs them before first
+    // paint, so they load after mount rather than in the entry bundle.
+    (async () => {
+      const [{ default: Lenis }, { default: gsap }, { ScrollTrigger }] =
+        await Promise.all([
+          import("lenis"),
+          import("gsap"),
+          import("gsap/ScrollTrigger"),
+        ]);
+      if (disposed) return;
 
-    gsap.registerPlugin(ScrollTrigger);
-    instance.on("scroll", ScrollTrigger.update);
+      const instance = new Lenis({
+        duration: 1.1,
+        easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        smoothWheel: true,
+        // Touch keeps native scrolling — smoothing it fights the OS.
+        syncTouch: false,
+        // GSAP's ticker drives the loop instead, so the two never run out of step.
+        autoRaf: false,
+      });
 
-    const tick = (time: number) => instance.raf(time * 1000);
-    gsap.ticker.add(tick);
-    gsap.ticker.lagSmoothing(0);
+      lenisRef.current = instance;
+      setLenis(instance);
+
+      gsap.registerPlugin(ScrollTrigger);
+      instance.on("scroll", ScrollTrigger.update);
+
+      const tick = (time: number) => instance.raf(time * 1000);
+      gsap.ticker.add(tick);
+      gsap.ticker.lagSmoothing(0);
+
+      cleanup = () => {
+        gsap.ticker.remove(tick);
+        gsap.ticker.lagSmoothing(500, 33);
+        instance.off("scroll", ScrollTrigger.update);
+        instance.destroy();
+        lenisRef.current = null;
+        setLenis(null);
+      };
+    })();
 
     return () => {
-      gsap.ticker.remove(tick);
-      gsap.ticker.lagSmoothing(500, 33);
-      instance.off("scroll", ScrollTrigger.update);
-      instance.destroy();
-      lenisRef.current = null;
-      setLenis(null);
+      disposed = true;
+      cleanup?.();
     };
   }, [reducedMotion]);
 
