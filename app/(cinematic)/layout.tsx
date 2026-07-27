@@ -1,9 +1,14 @@
 import { CartSheet } from "@/components/commerce/CartSheet";
+import { Footer } from "@/components/layout/Footer";
 import { Nav } from "@/components/layout/Nav";
 
 /**
- * No footer, no page padding — the cinematic group runs edge to edge and lets
- * each page own the full viewport. The motion layer lives in the root layout.
+ * Nav and Footer as everywhere else, but no top padding: the cinematic group's
+ * hero is a full-viewport sticky track that is meant to run under the
+ * transparent bar. Padding here would leave a band above it and stop the pin
+ * from reaching the top of the screen.
+ *
+ * The motion layer lives in the root layout.
  */
 export default function CinematicLayout({
   children,
@@ -14,6 +19,7 @@ export default function CinematicLayout({
     <>
       <Nav />
       <div className="bg-bg-deep">{children}</div>
+      <Footer />
       <CartSheet />
     </>
   );

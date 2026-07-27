@@ -1,119 +1,219 @@
 "use client";
 
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
+import { TriangleA, Wordmark } from "@/components/layout/Wordmark";
 import { Input } from "@/components/ui/input";
-import { POLICIES } from "@/lib/data/policies";
+import { currentDrop } from "@/lib/data/drops";
 import { PRODUCTS } from "@/lib/data/products";
 
-export function Footer() {
-  const [email, setEmail] = useState("");
-  const [pending, setPending] = useState(false);
+type Status = "idle" | "pending" | "done" | "error";
 
-  async function join(event: React.FormEvent) {
+const SHOP_LINKS = [
+  { href: "/products", label: "All trousers" },
+  ...PRODUCTS.map((p) => ({ href: `/products/${p.slug}`, label: p.name })),
+  { href: "/drops", label: currentDrop.title },
+];
+
+const HELP_LINKS = [
+  { href: "/about#shipping", label: "Shipping" },
+  { href: "/about#returns", label: "Returns" },
+  { href: "/about#sizing", label: "Size guide" },
+  { href: "mailto:hello@zuary.in", label: "Contact" },
+];
+
+export function Footer() {
+  return (
+    <footer className="border-t border-line bg-bg-deep py-20">
+      {/* Row 1 — oversized mark, full-bleed and cut off at the bottom edge.
+          With line-height 1 the baseline sits ~0.8em down, so the negative
+          margin has to clear that before it bites into the letterforms. */}
+      <div className="overflow-hidden" aria-hidden>
+        <Wordmark
+          className="font-display -mb-[0.3em] flex w-full justify-center font-black whitespace-nowrap text-fg/8"
+          triangleClassName="bg-current"
+          style={{ fontSize: "clamp(4rem, 14vw, 11rem)", letterSpacing: "-0.04em" }}
+        />
+      </div>
+
+      <div className="grid gap-12 px-6 pt-16 md:grid-cols-4 md:px-10">
+        <div>
+          <p className="t-display-sm">Cut sharp.</p>
+          <div className="my-5 h-px w-12 bg-accent" />
+          <p className="t-label text-fg-muted">Made in India</p>
+        </div>
+
+        <FooterNav heading="Shop" links={SHOP_LINKS} />
+        <FooterNav heading="Help" links={HELP_LINKS} />
+
+        <Newsletter />
+      </div>
+
+      <div className="mt-16 flex flex-col items-start gap-3 border-t border-line px-6 pt-6 md:flex-row md:items-center md:justify-between md:px-10">
+        <p className="t-label text-fg-muted">
+          © {new Date().getFullYear()} ZUARY
+        </p>
+        <div className="flex items-center gap-6">
+          <Link href="/about#terms" className="t-label text-fg-muted hover:text-fg">
+            Terms
+          </Link>
+          <Link
+            href="/about#privacy"
+            className="t-label text-fg-muted hover:text-fg"
+          >
+            Privacy
+          </Link>
+          <TriangleA className="text-[10px]" />
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+function FooterNav({
+  heading,
+  links,
+}: {
+  heading: string;
+  links: { href: string; label: string }[];
+}) {
+  return (
+    <nav>
+      <p className="t-label mb-5 text-fg-muted">{heading}</p>
+      <ul className="space-y-2.5">
+        {links.map((link) => (
+          <li key={link.href}>
+            <Link
+              href={link.href}
+              className="font-mono text-sm text-fg-muted transition-colors duration-[--dur-micro] hover:text-fg"
+            >
+              {link.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}
+
+function Newsletter() {
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState<Status>("idle");
+  const [error, setError] = useState("");
+
+  async function submit(event: React.FormEvent) {
     event.preventDefault();
-    setPending(true);
+    setStatus("pending");
+    setError("");
+
     try {
       const res = await fetch("/api/waitlist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, source: "footer" }),
       });
-      const data = await res.json();
+
+      // The endpoint has no database behind it yet, so it can answer with a
+      // non-JSON body. Parsing must never be what breaks the page.
+      const data = await res.json().catch(() => ({}) as { error?: string });
+
       if (!res.ok) {
-        toast(data.error ?? "Could not add you. Try again.");
+        setStatus("error");
+        setError(data.error ?? "Could not add you just yet. Try again later.");
         return;
       }
+
       setEmail("");
-      toast("You are on the list.");
+      setStatus("done");
     } catch {
-      toast("Network error. Try again.");
-    } finally {
-      setPending(false);
+      setStatus("error");
+      setError("Network error. Try again.");
     }
   }
 
   return (
-    <footer className="border-t border-line bg-bg-deep px-6 py-16 md:px-12">
-      <div className="grid gap-12 md:grid-cols-4">
-        <div className="md:col-span-2">
-          <p className="t-display-sm">
-            ZU<span className="text-accent">▲</span>RY
-          </p>
-          <p className="mt-3 max-w-sm text-sm text-fg-muted">
-            Trousers cut in fixed runs. Made in Tamil Nadu and Rajasthan.
-          </p>
+    <div>
+      <p className="t-label mb-5 text-fg-muted">The next drop</p>
 
-          <form onSubmit={join} className="mt-8 flex max-w-sm gap-2">
-            <Input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Email for the next drop"
-              aria-label="Email for the next drop"
-              className="h-11 rounded-sm border-line bg-bg-raised font-mono text-sm"
-            />
-            <Button
-              type="submit"
-              disabled={pending}
-              className="h-11 rounded-sm bg-accent font-mono text-[11px] tracking-[0.18em] text-carbon uppercase hover:bg-accent-soft"
-            >
-              {pending ? "…" : "Join"}
-            </Button>
-          </form>
-        </div>
+      {status === "done" ? (
+        <p className="font-mono text-sm text-accent">You&rsquo;re on the list.</p>
+      ) : (
+        <form onSubmit={submit} className="flex gap-2">
+          <Input
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Email"
+            aria-label="Email for the next drop"
+            className="h-11 rounded-sm border-line bg-bg-raised font-mono text-sm"
+          />
+          <button
+            type="submit"
+            disabled={status === "pending"}
+            aria-label="Join the list"
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-sm bg-accent text-carbon transition-colors hover:bg-accent-soft disabled:opacity-50"
+          >
+            <ArrowRight className="size-4" />
+          </button>
+        </form>
+      )}
 
-        <nav>
-          <p className="t-label mb-4 text-fg-muted">Shop</p>
-          <ul className="space-y-2">
-            {PRODUCTS.map((product) => (
-              <li key={product.slug}>
-                <Link
-                  href={`/products/${product.slug}`}
-                  className="font-mono text-sm text-fg-muted transition-colors hover:text-fg"
-                >
-                  {product.name}
-                </Link>
-              </li>
-            ))}
-            <li>
-              <Link
-                href="/orders"
-                className="font-mono text-sm text-fg-muted transition-colors hover:text-fg"
-              >
-                Track order
-              </Link>
-            </li>
-          </ul>
-        </nav>
+      {status === "error" ? (
+        <p className="t-label mt-3 text-fg-muted">{error}</p>
+      ) : null}
 
-        <nav>
-          <p className="t-label mb-4 text-fg-muted">Legal</p>
-          <ul className="space-y-2">
-            {POLICIES.map((policy) => (
-              <li key={policy.slug}>
-                <Link
-                  href={`/about#${policy.slug}`}
-                  className="font-mono text-sm text-fg-muted transition-colors hover:text-fg"
-                >
-                  {policy.title}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
+      <div className="mt-6 flex items-center gap-4">
+        <a
+          href="https://instagram.com/zuary"
+          target="_blank"
+          rel="noreferrer noopener"
+          aria-label="ZUARY on Instagram"
+          className="text-fg-muted transition-colors hover:text-fg"
+        >
+          <InstagramIcon />
+        </a>
+        <a
+          href="https://x.com/zuary"
+          target="_blank"
+          rel="noreferrer noopener"
+          aria-label="ZUARY on X"
+          className="text-fg-muted transition-colors hover:text-fg"
+        >
+          <XIcon />
+        </a>
       </div>
+    </div>
+  );
+}
 
-      <div className="mt-16 flex flex-col justify-between gap-2 border-t border-line pt-6 md:flex-row">
-        <p className="t-label text-fg-muted">
-          © {new Date().getFullYear()} ZUARY
-        </p>
-        <p className="t-label text-fg-muted">Cut sharp.</p>
-      </div>
-    </footer>
+/* lucide v1 dropped brand marks, so these two are inline. */
+
+function InstagramIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="size-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <rect x="2" y="2" width="20" height="20" rx="5" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+function XIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-4" fill="currentColor" aria-hidden>
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+    </svg>
   );
 }

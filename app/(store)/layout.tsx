@@ -14,7 +14,7 @@ export default function StoreLayout({
   return (
     <>
       <Nav />
-      <div className="min-h-screen pt-16">{children}</div>
+      <div className="min-h-screen pt-24 md:pt-28">{children}</div>
       <Footer />
       <CartSheet />
     </>
