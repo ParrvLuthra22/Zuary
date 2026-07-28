@@ -216,6 +216,15 @@ html.lenis body {
   animation-timing-function: var(--ease-out);
 }
 
+@keyframes zuary-indeterminate {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(400%);
+  }
+}
+
 @keyframes zuary-pulse {
   0%,
   100% {

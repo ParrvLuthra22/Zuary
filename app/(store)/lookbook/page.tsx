@@ -6,11 +6,14 @@ import { StickyStack } from "@/components/lookbook/StickyStack";
 import { RevealText } from "@/components/motion/RevealText";
 import { currentDrop } from "@/lib/data/drops";
 import { PRODUCTS } from "@/lib/data/products";
+import { pageMetadata } from "@/lib/site";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Lookbook",
-  description: "Drop 01, shot on location in Tamil Nadu.",
-};
+  description: "Drop 01, shot on location in Tamil Nadu and Rajasthan.",
+  path: "/lookbook",
+  type: "article",
+});
 
 /** The first run stacks; everything after it falls into the grid. */
 const STACK_COUNT = 5;

@@ -2,6 +2,8 @@ export type TeamMember = {
   name: string;
   role: string;
   focus: string;
+  /** Optional headshot. Falls back to an initial when absent. */
+  image?: string;
 };
 
 export const TEAM: TeamMember[] = [

@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 import { DropBridge } from "@/components/sections/DropBridge";
 import { HeroScrub } from "@/components/sections/HeroScrub";
 import { Marquee } from "@/components/sections/Marquee";
@@ -8,11 +10,23 @@ import { WaitlistSection } from "@/components/sections/WaitlistSection";
 import { currentDrop } from "@/lib/data/drops";
 import { PRODUCTS, getProduct } from "@/lib/data/products";
 
+import { JsonLd, organizationSchema } from "@/lib/schema";
+import { SITE_DESCRIPTION, pageMetadata } from "@/lib/site";
+
 const kohl = getProduct("kohl");
+
+export const metadata: Metadata = pageMetadata({
+  title: "ZUARY — Cut sharp.",
+  absoluteTitle: true,
+  description: SITE_DESCRIPTION,
+  path: "/",
+});
 
 export default function HomePage() {
   return (
     <>
+      <JsonLd data={organizationSchema()} />
+
       {/* 1 — /public/sequence/hero is empty, so the hero cross-dissolves the
           KOHL frames. Switch to mode="sequence" once the shoot lands. */}
       <HeroScrub mode="crossfade" fallbackImages={kohl?.images ?? []} />

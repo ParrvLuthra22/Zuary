@@ -9,8 +9,15 @@ import { ChapterProducts } from "@/components/drops/ChapterProducts";
 import { ChapterTitle } from "@/components/drops/ChapterTitle";
 import { DROPS, getDrop } from "@/lib/data/drops";
 import { PRODUCTS } from "@/lib/data/products";
+import { JsonLd, dropSchema } from "@/lib/schema";
+import { pageMetadata } from "@/lib/site";
 
 type Params = { params: Promise<{ slug: string }> };
+
+// The catalogue is finite and known at build time. Without this, an unknown
+// slug renders the not-found boundary with a 200 in production — a soft 404
+// that search engines will happily index.
+export const dynamicParams = false;
 
 export function generateStaticParams() {
   return DROPS.map((drop) => ({ slug: drop.slug }));
@@ -21,16 +28,12 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const drop = getDrop(slug);
   if (!drop) return { title: "Not found" };
 
-  return {
+  return pageMetadata({
     title: drop.title,
-    description: drop.tagline,
-    openGraph: {
-      title: `${drop.title} — ZUARY`,
-      description: drop.tagline,
-      images: drop.lookbookImages.slice(0, 1).map((i) => i.src),
-      type: "website",
-    },
-  };
+    description: `${drop.intro.slice(0, 150)}…`,
+    path: `/drops/${drop.slug}`,
+    type: "article",
+  });
 }
 
 export default async function DropPage({ params }: Params) {
@@ -42,6 +45,8 @@ export default async function DropPage({ params }: Params) {
 
   return (
     <>
+      <JsonLd data={dropSchema(drop)} />
+
       <ChapterTitle drop={drop} />
       <ChapterManifesto />
       <ChapterProducts products={products} />

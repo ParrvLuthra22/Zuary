@@ -18,8 +18,8 @@ const SHOP_LINKS = [
 ];
 
 const HELP_LINKS = [
-  { href: "/about#shipping", label: "Shipping" },
-  { href: "/about#returns", label: "Returns" },
+  { href: "/policies/shipping", label: "Shipping" },
+  { href: "/policies/returns", label: "Returns" },
   { href: "/about#sizing", label: "Size guide" },
   { href: "mailto:hello@zuary.in", label: "Contact" },
 ];
@@ -56,11 +56,11 @@ export function Footer() {
           © {new Date().getFullYear()} ZUARY
         </p>
         <div className="flex items-center gap-6">
-          <Link href="/about#terms" className="t-label text-fg-muted hover:text-fg">
+          <Link href="/policies/terms" className="t-label text-fg-muted hover:text-fg">
             Terms
           </Link>
           <Link
-            href="/about#privacy"
+            href="/policies/privacy"
             className="t-label text-fg-muted hover:text-fg"
           >
             Privacy

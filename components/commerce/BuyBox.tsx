@@ -176,7 +176,7 @@ export function BuyBox({ product, stock }: BuyBoxProps) {
             </AccordionTrigger>
             <AccordionContent>
               <ul className="space-y-1 text-sm text-fg-muted">
-                <li>Dispatched within two working days of payment.</li>
+                <li>Dispatched within three working days of payment.</li>
                 <li>Metro addresses: three to five working days after that.</li>
                 <li>7 days to return, unworn and tagged.</li>
                 <li>One free size exchange per order, subject to stock.</li>

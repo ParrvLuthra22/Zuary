@@ -6,11 +6,13 @@ import { ShopBrowser } from "@/components/commerce/ShopBrowser";
 import { RevealText } from "@/components/motion/RevealText";
 import { Marquee } from "@/components/sections/Marquee";
 import { PRODUCTS } from "@/lib/data/products";
+import { pageMetadata } from "@/lib/site";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Shop",
-  description: "Three cuts, one block. Trousers made in fixed runs.",
-};
+  description: "Three cuts, one block. Trousers made in fixed runs, India-wide.",
+  path: "/shop",
+});
 
 export default function ShopPage() {
   return (

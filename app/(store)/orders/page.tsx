@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
 
-export const metadata: Metadata = {
+import { pageMetadata } from "@/lib/site";
+
+export const metadata: Metadata = pageMetadata({
   title: "Orders",
-  robots: { index: false },
-};
+  description: "Track a ZUARY order.",
+  path: "/orders",
+  noIndex: true,
+});
 
 export default function OrdersPage() {
   return (

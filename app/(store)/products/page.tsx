@@ -2,11 +2,13 @@ import type { Metadata } from "next";
 
 import { ProductRail } from "@/components/sections/ProductRail";
 import { PRODUCTS } from "@/lib/data/products";
+import { pageMetadata } from "@/lib/site";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Products",
   description: "Every trouser ZUARY has cut.",
-};
+  path: "/products",
+});
 
 export default function ProductsPage() {
   return (

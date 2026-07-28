@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 
 import { CheckoutForm } from "@/components/commerce/CheckoutForm";
+import { pageMetadata } from "@/lib/site";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Checkout",
-  robots: { index: false },
-};
+  description: "Complete your ZUARY order.",
+  path: "/checkout",
+  noIndex: true,
+});
 
 export default function CheckoutPage() {
   return (

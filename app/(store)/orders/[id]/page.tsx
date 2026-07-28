@@ -6,12 +6,15 @@ import { OrderPending } from "@/components/commerce/OrderPending";
 import { TriangleA } from "@/components/layout/Wordmark";
 import { ButtonZ } from "@/components/ui/button-z";
 import { getOrderWithItems } from "@/lib/db/queries";
+import { pageMetadata } from "@/lib/site";
 import { formatINR } from "@/lib/utils";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Order",
-  robots: { index: false },
-};
+  description: "Your ZUARY order.",
+  path: "/orders",
+  noIndex: true,
+});
 
 // Status changes the moment the webhook lands — never cache this.
 export const dynamic = "force-dynamic";

@@ -7,10 +7,16 @@ import { ProductCard } from "@/components/commerce/ProductCard";
 import { ProductGallery } from "@/components/commerce/ProductGallery";
 import { TriangleA } from "@/components/layout/Wordmark";
 import { getVariantStock } from "@/lib/db/queries";
+import { JsonLd, productSchema } from "@/lib/schema";
+import { pageMetadata } from "@/lib/site";
 import { PRODUCTS, getProduct, type Product } from "@/lib/data/products";
-import { formatINR } from "@/lib/utils";
 
 type Params = { params: Promise<{ slug: string }> };
+
+// The catalogue is finite and known at build time. Without this, an unknown
+// slug renders the not-found boundary with a 200 in production — a soft 404
+// that search engines will happily index.
+export const dynamicParams = false;
 
 export function generateStaticParams() {
   return PRODUCTS.map((product) => ({ slug: product.slug }));
@@ -21,16 +27,16 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const product = getProduct(slug);
   if (!product) return { title: "Not found" };
 
-  return {
+  const url = `/products/${product.slug}`;
+
+  return pageMetadata({
     title: product.name,
     description: product.description,
-    openGraph: {
-      title: `${product.name} — ${formatINR(product.price)}`,
-      description: product.description,
-      images: product.images.slice(0, 1),
-      type: "website",
-    },
-  };
+    path: url,
+    // This route ships its own opengraph-image; null lets Next fill in the
+    // hashed URL it actually serves.
+    ogImage: null,
+  });
 }
 
 export default async function ProductPage({ params }: Params) {
@@ -46,6 +52,8 @@ export default async function ProductPage({ params }: Params) {
 
   return (
     <div className="pb-32 md:pb-0">
+      <JsonLd data={productSchema(product, stock)} />
+
       <article className="md:flex md:items-start">
         <div className="md:w-[58%]">
           <ProductGallery product={product} />

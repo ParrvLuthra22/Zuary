@@ -7,11 +7,13 @@ import { MaskedScrollSection } from "@/components/sections/MaskedScrollSection";
 import { ProductRail } from "@/components/sections/ProductRail";
 import { currentDrop } from "@/lib/data/drops";
 import { PRODUCTS } from "@/lib/data/products";
+import { pageMetadata } from "@/lib/site";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Drops",
-  description: currentDrop.tagline,
-};
+  description: `${currentDrop.title}. ${currentDrop.tagline}`,
+  path: "/drops",
+});
 
 export default function DropsPage() {
   const products = PRODUCTS.filter((p) => currentDrop.products.includes(p.slug));
