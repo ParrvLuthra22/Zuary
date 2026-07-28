@@ -1,11 +1,14 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { motion } from "framer-motion";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { TriangleA } from "@/components/layout/Wordmark";
+import { RevealText } from "@/components/motion/RevealText";
+import { fadeUp, inView } from "@/lib/motion/variants";
 import { Input } from "@/components/ui/input";
 import { ButtonZ } from "@/components/ui/button-z";
 
@@ -59,14 +62,27 @@ export function WaitlistSection() {
           </>
         ) : (
           <>
-            <h2 className="t-display-sm">Tier 01 lands soon.</h2>
-            <p className="mt-4 text-fg-muted">
-              Tees and basics from ₹999. Get told first.
-            </p>
+            <RevealText as="h2" className="t-display-sm justify-center">
+              Tier 01 lands soon.
+            </RevealText>
 
-            <form
+            <motion.p
+              variants={fadeUp}
+              initial="hidden"
+              whileInView="visible"
+              viewport={inView}
+              className="mt-4 text-fg-muted"
+            >
+              Tees and basics from ₹999. Get told first.
+            </motion.p>
+
+            <motion.form
               onSubmit={handleSubmit(onSubmit)}
               noValidate
+              variants={fadeUp}
+              initial="hidden"
+              whileInView="visible"
+              viewport={inView}
               className="mt-8 w-full max-w-md"
             >
               <div className="flex gap-2">
@@ -89,7 +105,7 @@ export function WaitlistSection() {
               {failure ? (
                 <p className="t-label mt-3 text-fg-muted">{failure}</p>
               ) : null}
-            </form>
+            </motion.form>
           </>
         )}
       </div>

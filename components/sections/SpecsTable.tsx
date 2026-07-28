@@ -2,8 +2,10 @@
 
 import { motion } from "framer-motion";
 
+import { RevealText } from "@/components/motion/RevealText";
+
 import { dur, easeOut } from "@/lib/motion/easing";
-import { inView } from "@/lib/motion/variants";
+import { fadeUp, inView } from "@/lib/motion/variants";
 import type { Product } from "@/lib/data/products";
 
 const ROWS: { label: string; value: (p: Product) => string }[] = [
@@ -21,11 +23,17 @@ const ROWS: { label: string; value: (p: Product) => string }[] = [
 export function SpecsTable({ products }: { products: Product[] }) {
   return (
     <section className="bg-bg-deep px-6 py-24 md:px-12">
-      <h2 className="t-display-sm">Specification</h2>
+      <RevealText as="h2" className="t-display-sm">
+        Specification
+      </RevealText>
 
       <div className="mt-12" role="table" aria-label="Trouser specification">
-        <div
+        <motion.div
           role="row"
+          variants={fadeUp}
+          initial="hidden"
+          whileInView="visible"
+          viewport={inView}
           className="grid grid-cols-2 gap-x-6 gap-y-2 border-b border-line pb-4 md:grid-cols-4"
         >
           <span role="columnheader" className="t-label text-fg-muted">
@@ -40,7 +48,7 @@ export function SpecsTable({ products }: { products: Product[] }) {
               {product.name}
             </span>
           ))}
-        </div>
+        </motion.div>
 
         {ROWS.map((row, i) => (
           <motion.div

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { RevealText } from "@/components/motion/RevealText";
 import type { Product } from "@/lib/data/products";
 import { cn, formatINR } from "@/lib/utils";
 import { useUIStore } from "@/stores/ui";
@@ -127,7 +128,9 @@ export function TrioRail({ products }: { products: Product[] }) {
   const heading = (
     <header className="px-6 pb-10 md:px-12">
       <p className="t-label text-accent">The trio</p>
-      <h2 className="t-display-md mt-3">Three cuts. One block.</h2>
+      <RevealText as="h2" className="t-display-md mt-3">
+        Three cuts. One block.
+      </RevealText>
     </header>
   );
 
