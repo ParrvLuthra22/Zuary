@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { RevealText } from "@/components/motion/RevealText";
-import { Marquee } from "@/components/sections/Marquee";
-import { ProductRail } from "@/components/sections/ProductRail";
-import { StackGallery } from "@/components/sections/StackGallery";
+import { ChapterClose } from "@/components/drops/ChapterClose";
+import { ChapterLookbook } from "@/components/drops/ChapterLookbook";
+import { ChapterManifesto } from "@/components/drops/ChapterManifesto";
+import { ChapterMaterial } from "@/components/drops/ChapterMaterial";
+import { ChapterProducts } from "@/components/drops/ChapterProducts";
+import { ChapterTitle } from "@/components/drops/ChapterTitle";
 import { DROPS, getDrop } from "@/lib/data/drops";
 import { PRODUCTS } from "@/lib/data/products";
 
@@ -18,7 +20,17 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { slug } = await params;
   const drop = getDrop(slug);
   if (!drop) return { title: "Not found" };
-  return { title: drop.title, description: drop.tagline };
+
+  return {
+    title: drop.title,
+    description: drop.tagline,
+    openGraph: {
+      title: `${drop.title} — ZUARY`,
+      description: drop.tagline,
+      images: drop.lookbookImages.slice(0, 1).map((i) => i.src),
+      type: "website",
+    },
+  };
 }
 
 export default async function DropPage({ params }: Params) {
@@ -30,23 +42,12 @@ export default async function DropPage({ params }: Params) {
 
   return (
     <>
-      <header className="flex h-svh flex-col items-center justify-center px-6 text-center">
-        <p className="t-label text-accent">{drop.season}</p>
-        <h1 className="t-display-xl mt-4">{drop.title}</h1>
-        <p className="t-label mt-6 text-fg-muted">{drop.tagline}</p>
-      </header>
-
-      <section className="px-6 py-28 md:px-12">
-        <RevealText as="h2" className="t-display-md max-w-3xl">
-          {drop.intro}
-        </RevealText>
-      </section>
-
-      <Marquee items={["Three cuts", "One block", "Fixed run", "Cut sharp"]} speed={24} />
-
-      <ProductRail products={products} eyebrow={drop.season} title="The three" />
-
-      <StackGallery images={drop.lookbook} alt={drop.title} />
+      <ChapterTitle drop={drop} />
+      <ChapterManifesto />
+      <ChapterProducts products={products} />
+      <ChapterLookbook images={drop.lookbookImages} />
+      <ChapterMaterial />
+      <ChapterClose />
     </>
   );
 }

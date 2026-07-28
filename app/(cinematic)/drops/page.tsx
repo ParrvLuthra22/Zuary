@@ -39,7 +39,7 @@ export default function DropsPage() {
             style={{ backgroundColor: "#2A2E31" }}
           >
             <Image
-              src={currentDrop.lookbook[0]}
+              src={currentDrop.lookbookImages[0].src}
               alt={currentDrop.title}
               fill
               sizes="100vw"

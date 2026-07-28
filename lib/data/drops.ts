@@ -2,6 +2,15 @@ import type { ProductSlug } from "./products";
 
 export type DropStatus = "teased" | "live" | "archived";
 
+export type LookbookSpan = "full" | "half" | "third";
+
+export type LookbookImage = {
+  src: string;
+  /** Grid width: full = 12 cols, half = 6, third = 4. */
+  span: LookbookSpan;
+  caption: string;
+};
+
 export type Drop = {
   slug: string;
   title: string;
@@ -12,7 +21,7 @@ export type Drop = {
   releasedAt: string; // ISO date
   intro: string;
   products: ProductSlug[];
-  lookbook: string[];
+  lookbookImages: LookbookImage[];
 };
 
 export const DROPS: Drop[] = [
@@ -27,15 +36,15 @@ export const DROPS: Drop[] = [
     intro:
       "Three trousers, one block, three ways of reading it. Tailored, straight, pleated. Same rise, same waistband, same mills we visited twice before cutting anything.",
     products: ["kohl", "dhool", "reeh"],
-    lookbook: [
-      "/lookbook/the-trouser-trio/01.webp",
-      "/lookbook/the-trouser-trio/02.webp",
-      "/lookbook/the-trouser-trio/03.webp",
-      "/lookbook/the-trouser-trio/04.webp",
-      "/lookbook/the-trouser-trio/05.webp",
-      "/lookbook/the-trouser-trio/06.webp",
-      "/lookbook/the-trouser-trio/07.webp",
-      "/lookbook/the-trouser-trio/08.webp",
+    lookbookImages: [
+      { src: "/lookbook/the-trouser-trio/01.webp", span: "full", caption: "Tirupur, 06:40" },
+      { src: "/lookbook/the-trouser-trio/02.webp", span: "half", caption: "KOHL, single break" },
+      { src: "/lookbook/the-trouser-trio/03.webp", span: "half", caption: "Faced waistband" },
+      { src: "/lookbook/the-trouser-trio/04.webp", span: "third", caption: "Drill, 300 GSM" },
+      { src: "/lookbook/the-trouser-trio/05.webp", span: "third", caption: "Forward pleat" },
+      { src: "/lookbook/the-trouser-trio/06.webp", span: "third", caption: "Hem, unfinished" },
+      { src: "/lookbook/the-trouser-trio/07.webp", span: "half", caption: "DHOOL over boot" },
+      { src: "/lookbook/the-trouser-trio/08.webp", span: "half", caption: "REEH, sand" },
     ],
   },
 ];

@@ -17,7 +17,7 @@ export default function LookbookPage() {
       </header>
 
       <div className="mt-16">
-        <StackGallery images={currentDrop.lookbook} alt={currentDrop.title} />
+        <StackGallery images={currentDrop.lookbookImages.map((i) => i.src)} alt={currentDrop.title} />
       </div>
     </div>
   );
