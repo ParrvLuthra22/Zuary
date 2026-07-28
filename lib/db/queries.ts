@@ -1,5 +1,8 @@
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 
+import { getProduct, type Size } from "@/lib/data/products";
+import { shippingFor } from "@/lib/data/policies";
+
 import { db } from "./index";
 import {
   orderItems,
@@ -33,6 +36,131 @@ export async function getVariant(productSlug: string, size: string) {
     .where(and(eq(products.slug, productSlug), eq(variants.size, size)))
     .limit(1);
   return row;
+}
+
+/* ── Cart validation ───────────────────────────────────────── */
+
+export type CartLineInput = {
+  slug: string;
+  size: string;
+  qty: number;
+  /** What the browser thinks this costs. Checked, never trusted. */
+  unitPriceInr?: number;
+};
+
+export type ValidatedLine = {
+  slug: string;
+  size: string;
+  requestedQty: number;
+  /** Requested qty clamped to what is actually on the shelf. */
+  qty: number;
+  unitPriceInr: number;
+  lineTotalInr: number;
+  stock: number | null;
+  available: boolean;
+  issues: ("unavailable" | "price-changed" | "qty-reduced")[];
+};
+
+export type CartValidation = {
+  lines: ValidatedLine[];
+  subtotalInr: number;
+  shippingInr: number;
+  totalInr: number;
+  /** True when anything the browser sent had to be corrected. */
+  changed: boolean;
+  /** False when there is no database — stock is then unknown, not zero. */
+  stockKnown: boolean;
+};
+
+/**
+ * Re-prices and re-checks a cart on the server.
+ *
+ * Price comes from the catalogue, which is server-side and cannot be edited by
+ * a visitor; the database is preferred when it is reachable so a price change
+ * there wins. Stock comes from the database only — with no database the stock
+ * is unknown and lines are left alone rather than being wrongly emptied.
+ */
+export async function validateCart(
+  items: CartLineInput[],
+): Promise<CartValidation> {
+  const slugs = [...new Set(items.map((i) => i.slug))];
+
+  let rows: Awaited<ReturnType<typeof getVariantsForSlugs>> = [];
+  let stockKnown = false;
+  try {
+    rows = await getVariantsForSlugs(slugs);
+    stockKnown = rows.length > 0;
+  } catch {
+    stockKnown = false;
+  }
+
+  const key = (slug: string, size: string) => `${slug}:${size}`;
+  const byVariant = new Map(rows.map((r) => [key(r.productSlug, r.size), r]));
+
+  const lines: ValidatedLine[] = items.flatMap((item) => {
+    const product = getProduct(item.slug);
+    const variant = byVariant.get(key(item.slug, item.size));
+    const issues: ValidatedLine["issues"] = [];
+
+    // Not in the catalogue at all, or a size this product is not cut in.
+    if (!product || !product.sizes.includes(item.size as Size)) {
+      return [
+        {
+          slug: item.slug,
+          size: item.size,
+          requestedQty: item.qty,
+          qty: 0,
+          unitPriceInr: 0,
+          lineTotalInr: 0,
+          stock: 0,
+          available: false,
+          issues: ["unavailable"],
+        },
+      ];
+    }
+
+    const unitPriceInr = variant?.priceInr ?? product.price;
+    if (
+      item.unitPriceInr !== undefined &&
+      item.unitPriceInr !== unitPriceInr
+    ) {
+      issues.push("price-changed");
+    }
+
+    const stock = stockKnown ? (variant?.stock ?? 0) : null;
+    let qty = item.qty;
+
+    if (stock !== null && qty > stock) {
+      qty = Math.max(0, stock);
+      issues.push(qty === 0 ? "unavailable" : "qty-reduced");
+    }
+
+    return [
+      {
+        slug: item.slug,
+        size: item.size,
+        requestedQty: item.qty,
+        qty,
+        unitPriceInr,
+        lineTotalInr: unitPriceInr * qty,
+        stock,
+        available: qty > 0,
+        issues,
+      },
+    ];
+  });
+
+  const subtotalInr = lines.reduce((sum, l) => sum + l.lineTotalInr, 0);
+  const shippingInr = shippingFor(subtotalInr);
+
+  return {
+    lines,
+    subtotalInr,
+    shippingInr,
+    totalInr: subtotalInr + shippingInr,
+    changed: lines.some((l) => l.issues.length > 0),
+    stockKnown,
+  };
 }
 
 /**

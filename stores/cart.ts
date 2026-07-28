@@ -9,6 +9,9 @@ export type CartItem = {
   slug: ProductSlug;
   size: Size;
   qty: number;
+  /** Price shown when the line was added. Sent to the server so a tampered or
+   *  stale value can be detected — never used as the price of record. */
+  unitPriceInr: number;
 };
 
 const MAX_QTY_PER_LINE = 5;
@@ -23,6 +26,10 @@ type CartState = {
   clear: () => void;
   /** Drops lines whose slug is no longer in the catalogue. */
   reconcile: () => void;
+  /** Applies the server's verdict: clamped quantities and real prices. */
+  applyServerTruth: (
+    lines: { slug: string; size: string; qty: number; unitPriceInr: number }[],
+  ) => void;
 };
 
 const sameLine = (item: CartItem, slug: ProductSlug, size: Size) =>
@@ -41,7 +48,17 @@ export const useCartStore = create<CartState>()(
         set((state) => {
           const existing = state.items.find((i) => sameLine(i, slug, size));
           if (!existing) {
-            return { items: [...state.items, { slug, size, qty: clampQty(qty) }] };
+            return {
+              items: [
+                ...state.items,
+                {
+                  slug,
+                  size,
+                  qty: clampQty(qty),
+                  unitPriceInr: getProduct(slug)?.price ?? 0,
+                },
+              ],
+            };
           }
           return {
             items: state.items.map((i) =>
@@ -70,10 +87,29 @@ export const useCartStore = create<CartState>()(
 
       clear: () => set({ items: [] }),
 
+      applyServerTruth: (lines) =>
+        set((state) => ({
+          items: state.items
+            .map((item) => {
+              const truth = lines.find(
+                (l) => l.slug === item.slug && l.size === item.size,
+              );
+              if (!truth) return item;
+              return { ...item, qty: truth.qty, unitPriceInr: truth.unitPriceInr };
+            })
+            .filter((item) => item.qty > 0),
+        })),
+
       reconcile: () =>
         set((state) => ({
           hydrated: true,
-          items: state.items.filter((i) => Boolean(getProduct(i.slug))),
+          items: state.items
+            .filter((i) => Boolean(getProduct(i.slug)))
+            // Carts persisted before prices were stored have no unitPriceInr.
+            .map((i) => ({
+              ...i,
+              unitPriceInr: i.unitPriceInr ?? getProduct(i.slug)?.price ?? 0,
+            })),
         })),
     }),
     {

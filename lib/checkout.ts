@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { PRODUCTS, getProduct, type Size } from "@/lib/data/products";
-import { SHIPPING_FLAT_INR } from "@/lib/data/policies";
+import { shippingFor } from "@/lib/data/policies";
 
 const PRODUCT_SLUGS = PRODUCTS.map((p) => p.slug) as [string, ...string[]];
 
@@ -68,7 +68,7 @@ export function priceCart(items: { slug: string; size: Size; qty: number }[]) {
   });
 
   const subtotalInr = lines.reduce((sum, line) => sum + line.lineTotalInr, 0);
-  const shippingInr = SHIPPING_FLAT_INR;
+  const shippingInr = shippingFor(subtotalInr);
 
   return { lines, subtotalInr, shippingInr, totalInr: subtotalInr + shippingInr };
 }

@@ -1,145 +1,90 @@
 "use client";
 
-import { Minus, Plus, X } from "lucide-react";
 import Link from "next/link";
 
-import { ProductImage } from "@/components/commerce/ProductImage";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import {
+  CartLineList,
+  CartTotals,
+  CartWarning,
+} from "@/components/commerce/CartLines";
+import { useCartValidation } from "@/components/commerce/useCartValidation";
+import { TriangleA } from "@/components/layout/Wordmark";
+import { ButtonZ } from "@/components/ui/button-z";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { shippingFor } from "@/lib/data/policies";
 import { formatINR } from "@/lib/utils";
-import { cartLines, cartSubtotal, useCartStore } from "@/stores/cart";
+import { cartCount, cartSubtotal, useCartStore } from "@/stores/cart";
 import { useUIStore } from "@/stores/ui";
 
 export function CartSheet() {
   const open = useUIStore((s) => s.cartOpen);
   const setCartOpen = useUIStore((s) => s.setCartOpen);
-
   const items = useCartStore((s) => s.items);
-  const setQty = useCartStore((s) => s.setQty);
-  const remove = useCartStore((s) => s.remove);
 
-  const lines = cartLines(items);
-  const subtotal = cartSubtotal(items);
+  // Re-checked on open and on every quantity change.
+  const { validation, corrected, lineFor } = useCartValidation(items, open);
+
+  const count = cartCount(items);
+  const subtotal = validation?.subtotalInr ?? cartSubtotal(items);
+  const shipping = validation?.shippingInr ?? shippingFor(subtotal);
+  const total = validation?.totalInr ?? subtotal + shipping;
 
   return (
     <Sheet open={open} onOpenChange={setCartOpen}>
       <SheetContent
         side="right"
-        className="flex w-full flex-col border-line bg-bg sm:max-w-md"
+        className="flex w-full flex-col border-line bg-bg p-0 sm:max-w-[480px]"
       >
-        <SheetHeader className="border-b border-line">
-          <SheetTitle className="t-label text-fg">
-            Cart ({lines.length})
+        <SheetHeader className="border-b border-line px-6">
+          <SheetTitle className="flex items-baseline gap-3">
+            <span className="t-display-sm text-fg">Bag</span>
+            <span className="t-label text-fg-muted">
+              {count} {count === 1 ? "item" : "items"}
+            </span>
           </SheetTitle>
         </SheetHeader>
 
-        {lines.length === 0 ? (
-          <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6">
-            <p className="t-label text-fg-muted">Nothing in here yet.</p>
-            <Link
-              href="/shop"
-              onClick={() => setCartOpen(false)}
-              className="t-label text-accent hover:underline"
-            >
-              See the drop
-            </Link>
+        {items.length === 0 ? (
+          <div className="flex flex-1 flex-col items-center justify-center gap-5 px-6">
+            <TriangleA className="text-4xl" />
+            <p className="t-display-sm">Your bag is empty.</p>
+            <ButtonZ asChild variant="outline">
+              <Link href="/shop" onClick={() => setCartOpen(false)}>
+                Shop trousers
+              </Link>
+            </ButtonZ>
           </div>
         ) : (
           <>
-            <ul className="flex-1 divide-y divide-line overflow-y-auto px-6">
-              {lines.map((line) => (
-                <li
-                  key={`${line.slug}-${line.size}`}
-                  className="flex gap-4 py-5"
-                >
-                  <ProductImage
-                    src={line.product.images[0]}
-                    alt={line.product.name}
-                    swatch={line.product.swatch}
-                    sizes="72px"
-                    className="h-24 w-18 shrink-0 rounded-sm border border-line"
-                  />
+            <CartWarning shown={corrected} />
 
-                  <div className="flex min-w-0 flex-1 flex-col justify-between">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="font-mono text-sm text-fg">
-                          {line.product.name}
-                        </p>
-                        <p className="t-label mt-1 text-fg-muted">
-                          {line.size} · {line.product.fit}
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => remove(line.slug, line.size)}
-                        aria-label={`Remove ${line.product.name} ${line.size}`}
-                        className="text-fg-muted transition-colors hover:text-fg"
-                      >
-                        <X className="size-4" />
-                      </button>
-                    </div>
+            <div className="flex-1 overflow-y-auto">
+              <CartLineList
+                items={items}
+                lineFor={lineFor}
+                onNavigate={() => setCartOpen(false)}
+                compact
+              />
+            </div>
 
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3 rounded-sm border border-line px-2 py-1">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setQty(line.slug, line.size, line.qty - 1)
-                          }
-                          aria-label="Decrease quantity"
-                          className="text-fg-muted transition-colors hover:text-fg"
-                        >
-                          <Minus className="size-3.5" />
-                        </button>
-                        <span className="font-mono text-xs tabular-nums">
-                          {line.qty}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setQty(line.slug, line.size, line.qty + 1)
-                          }
-                          aria-label="Increase quantity"
-                          className="text-fg-muted transition-colors hover:text-fg"
-                        >
-                          <Plus className="size-3.5" />
-                        </button>
-                      </div>
-                      <span className="font-mono text-sm text-fg-muted">
-                        {formatINR(line.lineTotal)}
-                      </span>
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            <div className="space-y-4 border-t border-line px-6 py-6">
+              <CartTotals subtotal={subtotal} shipping={shipping} />
 
-            <div className="space-y-4 px-6 pb-6">
-              <Separator className="bg-line" />
-              <div className="flex items-baseline justify-between">
-                <span className="t-label text-fg-muted">Subtotal</span>
-                <span className="font-mono text-lg text-fg">
-                  {formatINR(subtotal)}
-                </span>
+              <div className="flex items-baseline justify-between border-t border-line pt-4">
+                <span className="t-label text-fg-muted">Total</span>
+                <span className="t-display-sm">{formatINR(total)}</span>
               </div>
-              <p className="t-label text-fg-muted">
-                Shipping free. Taxes included.
-              </p>
-              <Button
-                asChild
-                className="h-14 w-full rounded-sm bg-accent font-mono text-xs tracking-[0.18em] text-carbon uppercase hover:bg-accent-soft"
-              >
+
+              <ButtonZ asChild size="lg" className="w-full">
                 <Link href="/checkout" onClick={() => setCartOpen(false)}>
                   Checkout
                 </Link>
-              </Button>
+              </ButtonZ>
             </div>
           </>
         )}

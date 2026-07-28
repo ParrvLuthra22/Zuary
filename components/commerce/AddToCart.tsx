@@ -53,7 +53,7 @@ export function AddToCart({ product }: { product: Product }) {
       </Magnetic>
 
       <p className="t-label text-fg-muted">
-        Free shipping across India · {product.mill}
+        Free shipping over ₹2,000 · {product.mill}
       </p>
     </div>
   );

@@ -5,8 +5,12 @@ export type Policy = {
   sections: { heading: string; body: string[] }[];
 };
 
-export const SHIPPING_FLAT_INR = 0;
-export const FREE_SHIPPING_THRESHOLD_INR = 0;
+export const SHIPPING_FLAT_INR = 99;
+export const FREE_SHIPPING_THRESHOLD_INR = 2000;
+
+/** Shipping is free once the basket clears the threshold. */
+export const shippingFor = (subtotalInr: number) =>
+  subtotalInr >= FREE_SHIPPING_THRESHOLD_INR ? 0 : SHIPPING_FLAT_INR;
 export const RETURN_WINDOW_DAYS = 7;
 
 export const POLICIES: Policy[] = [
@@ -23,7 +27,9 @@ export const POLICIES: Policy[] = [
       },
       {
         heading: "Cost",
-        body: ["Free on every order. It is priced into the trouser."],
+        body: [
+          "Free over ₹2,000. Below that, a flat ₹99 anywhere in India.",
+        ],
       },
       {
         heading: "Time",
