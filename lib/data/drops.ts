@@ -6,9 +6,11 @@ export type LookbookSpan = "full" | "half" | "third";
 
 export type LookbookImage = {
   src: string;
-  /** Grid width: full = 12 cols, half = 6, third = 4. */
+  /** Grid width on the drop page: full = 12 cols, half = 6, third = 4. */
   span: LookbookSpan;
   caption: string;
+  /** The trouser this shot features, linked from the lookbook caption. */
+  product?: ProductSlug;
 };
 
 export type Drop = {
@@ -37,14 +39,16 @@ export const DROPS: Drop[] = [
       "Three trousers, one block, three ways of reading it. Tailored, straight, pleated. Same rise, same waistband, same mills we visited twice before cutting anything.",
     products: ["kohl", "dhool", "reeh"],
     lookbookImages: [
-      { src: "/lookbook/the-trouser-trio/01.webp", span: "full", caption: "Tirupur, 06:40" },
-      { src: "/lookbook/the-trouser-trio/02.webp", span: "half", caption: "KOHL, single break" },
-      { src: "/lookbook/the-trouser-trio/03.webp", span: "half", caption: "Faced waistband" },
-      { src: "/lookbook/the-trouser-trio/04.webp", span: "third", caption: "Drill, 300 GSM" },
-      { src: "/lookbook/the-trouser-trio/05.webp", span: "third", caption: "Forward pleat" },
-      { src: "/lookbook/the-trouser-trio/06.webp", span: "third", caption: "Hem, unfinished" },
-      { src: "/lookbook/the-trouser-trio/07.webp", span: "half", caption: "DHOOL over boot" },
-      { src: "/lookbook/the-trouser-trio/08.webp", span: "half", caption: "REEH, sand" },
+      { src: "/lookbook/the-trouser-trio/01.webp", span: "full", caption: "First light on the cutting floor.", product: "kohl" },
+      { src: "/lookbook/the-trouser-trio/02.webp", span: "half", caption: "A single break, nothing more.", product: "kohl" },
+      { src: "/lookbook/the-trouser-trio/03.webp", span: "half", caption: "Faced waistband, no elastic.", product: "dhool" },
+      { src: "/lookbook/the-trouser-trio/04.webp", span: "third", caption: "Drill at 300 GSM, washed once.", product: "dhool" },
+      { src: "/lookbook/the-trouser-trio/05.webp", span: "third", caption: "The pleat stays shut standing.", product: "reeh" },
+      { src: "/lookbook/the-trouser-trio/06.webp", span: "third", caption: "Hem left long for the tailor.", product: "reeh" },
+      { src: "/lookbook/the-trouser-trio/07.webp", span: "half", caption: "Cut wide enough for a boot.", product: "dhool" },
+      { src: "/lookbook/the-trouser-trio/08.webp", span: "half", caption: "Sand, and the light going.", product: "reeh" },
+      { src: "/lookbook/the-trouser-trio/09.webp", span: "half", caption: "Black that fades at the seam.", product: "kohl" },
+      { src: "/lookbook/the-trouser-trio/10.webp", span: "half", caption: "Three cuts, one block.", product: "kohl" },
     ],
   },
 ];
