@@ -209,6 +209,13 @@ html.lenis body {
   }
 }
 
+/* shadcn's accordion animates via Radix keyframes and does not expose the
+   animated element's class, so the timing is set here. */
+[data-slot="accordion-content"] {
+  animation-duration: 400ms;
+  animation-timing-function: var(--ease-out);
+}
+
 @keyframes zuary-pulse {
   0%,
   100% {
@@ -232,44 +239,51 @@ html.lenis body {
 }
 
 /* The trouser cursor replaces the native one, but only where it actually
-   renders: a fine pointer, and no reduced-motion preference. */
-@media (pointer: fine) and (prefers-reduced-motion: no-preference) {
-  html {
-    cursor: none;
-  }
+   renders: a fine pointer, and no reduced-motion preference.
 
-  a,
-  button,
-  [role="button"] {
-    cursor: none;
-  }
+   Kept inside @layer base so Tailwind's cursor-* utilities can still override
+   it. Unlayered rules beat every layer regardless of specificity, which would
+   silently kill `cursor-not-allowed` and friends everywhere in the app. */
+@layer base {
+  @media (pointer: fine) and (prefers-reduced-motion: no-preference) {
+    html {
+      cursor: none;
+    }
 
-  /* Anything you type into keeps a caret — the cursor hides itself there. */
-  input,
-  textarea,
-  [contenteditable="true"],
-  [data-cursor="text"] {
-    cursor: text;
-  }
+    a,
+    button,
+    [role="button"] {
+      cursor: none;
+    }
 
-  /* Native controls keep whatever cursor the platform gives them. Picking from
-     a select or dragging a range with no visible pointer is unusable. */
-  select,
-  option,
-  input[type="checkbox"],
-  input[type="radio"],
-  input[type="range"],
-  input[type="file"],
-  input[type="color"],
-  input[type="date"],
-  input[type="time"],
-  input[type="datetime-local"],
-  input[type="month"],
-  input[type="week"],
-  ::-webkit-calendar-picker-indicator {
-    cursor: auto;
+    /* Anything you type into keeps a caret — the cursor hides itself there. */
+    input,
+    textarea,
+    [contenteditable="true"],
+    [data-cursor="text"] {
+      cursor: text;
+    }
+
+    /* Native controls keep whatever cursor the platform gives them. Picking from
+       a select or dragging a range with no visible pointer is unusable. */
+    select,
+    option,
+    input[type="checkbox"],
+    input[type="radio"],
+    input[type="range"],
+    input[type="file"],
+    input[type="color"],
+    input[type="date"],
+    input[type="time"],
+    input[type="datetime-local"],
+    input[type="month"],
+    input[type="week"],
+    ::-webkit-calendar-picker-indicator {
+      cursor: auto;
+    }
   }
 }
+
 
 @layer components {
   .t-display-xl {

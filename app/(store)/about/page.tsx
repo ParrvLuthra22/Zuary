@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { Marquee } from "@/components/sections/Marquee";
 import { POLICIES } from "@/lib/data/policies";
+import { SIZE_GUIDE } from "@/lib/data/products";
 import { TEAM } from "@/lib/data/team";
 
 export const metadata: Metadata = {
@@ -61,7 +62,7 @@ export default function AboutPage() {
           <table className="w-full min-w-lg border-collapse text-left font-mono text-sm">
             <thead>
               <tr className="border-b border-line">
-                {["Size", "Waist", "Hip", "Inseam"].map((head) => (
+                {["Size", "Waist", "Hip", "Thigh", "Inseam", "Hem"].map((head) => (
                   <th key={head} className="t-label py-3 text-fg-muted">
                     {head}
                   </th>
@@ -69,18 +70,14 @@ export default function AboutPage() {
               </tr>
             </thead>
             <tbody className="text-fg-muted">
-              {[
-                ["S", '30"', '38"', '29"'],
-                ["M", '32"', '40"', '30"'],
-                ["L", '34"', '42"', '31"'],
-                ["XL", '36"', '44"', '31"'],
-              ].map((row) => (
-                <tr key={row[0]} className="border-b border-line">
-                  {row.map((cell, i) => (
-                    <td key={cell} className={i === 0 ? "py-3 text-fg" : "py-3"}>
-                      {cell}
-                    </td>
-                  ))}
+              {SIZE_GUIDE.map((row) => (
+                <tr key={row.size} className="border-b border-line">
+                  <td className="py-3 text-fg">{row.size}</td>
+                  <td className="py-3">{row.waist}</td>
+                  <td className="py-3">{row.hip}</td>
+                  <td className="py-3">{row.thigh}</td>
+                  <td className="py-3">{row.inseam}</td>
+                  <td className="py-3">{row.hem}</td>
                 </tr>
               ))}
             </tbody>

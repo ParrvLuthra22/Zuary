@@ -35,6 +35,27 @@ export async function getVariant(productSlug: string, size: string) {
   return row;
 }
 
+/**
+ * Stock per size for one product. Returns null when the database is not
+ * reachable — the caller must treat that as "unknown", not as "sold out".
+ */
+export async function getVariantStock(
+  slug: string,
+): Promise<Record<string, number> | null> {
+  try {
+    const rows = await db
+      .select({ size: variants.size, stock: variants.stock })
+      .from(variants)
+      .innerJoin(products, eq(variants.productId, products.id))
+      .where(eq(products.slug, slug));
+
+    if (rows.length === 0) return null;
+    return Object.fromEntries(rows.map((r) => [r.size, r.stock]));
+  } catch {
+    return null;
+  }
+}
+
 export async function getVariantsForSlugs(slugs: string[]) {
   if (slugs.length === 0) return [];
   return db

@@ -10,10 +10,14 @@ export type Product = {
   devaMeaning: string;
   fit: "tailored" | "straight" | "pleated";
   swatch: string;
+  /** Human name for the swatch, shown beside it on the product page. */
+  colour: string;
   price: number; // rupees, integer
   fabric: string;
   weight: string;
   mill: string;
+  weave: string;
+  shrinkage: string;
   description: string;
   fabricStory: string;
   care: string[];
@@ -33,10 +37,13 @@ export const PRODUCTS: Product[] = [
     devaMeaning: "kohl, deep black",
     fit: "tailored",
     swatch: "#121416",
+    colour: "Deep black",
     price: 2999,
     fabric: "Cotton twill",
     weight: "280 GSM",
     mill: "Tirupur, Tamil Nadu",
+    weave: "3/1 right-hand twill",
+    shrinkage: "Under 2%, pre-washed",
     description:
       "A clean leg with a single break. Heavyweight twill holds the line; the cut sits flat on the hip.",
     fabricStory:
@@ -61,10 +68,13 @@ export const PRODUCTS: Product[] = [
     devaMeaning: "dust, dry earth",
     fit: "straight",
     swatch: "#4A4F54",
+    colour: "Dry earth",
     price: 2999,
     fabric: "Cotton drill",
     weight: "300 GSM",
     mill: "Erode, Tamil Nadu",
+    weave: "2/1 steep drill",
+    shrinkage: "Under 1%, washed before cutting",
     description:
       "Straight from hip to hem, no taper. Cut wide enough to sit over a boot. The waistband is faced, not elasticated.",
     fabricStory:
@@ -94,10 +104,13 @@ export const PRODUCTS: Product[] = [
     devaMeaning: "sand, desert wind",
     fit: "pleated",
     swatch: "#B5A183",
+    colour: "Desert sand",
     price: 3299,
     fabric: "Cotton-linen blend",
     weight: "240 GSM",
     mill: "Bhilwara, Rajasthan",
+    weave: "Plain weave, 60/40 cotton-linen",
+    shrinkage: "Up to 3%, linen moves",
     description:
       "Two forward pleats, deep rise, tapered from the knee. The pleats stay shut when you stand and open when you sit.",
     care: [
@@ -121,3 +134,20 @@ export const PRODUCTS: Product[] = [
 ];
 
 export const getProduct = (slug: string) => PRODUCTS.find((p) => p.slug === slug);
+
+export type SizeGuideRow = {
+  size: Size;
+  waist: string;
+  hip: string;
+  thigh: string;
+  inseam: string;
+  hem: string;
+};
+
+/** Garment measured flat, in inches. One block, so it holds for all three. */
+export const SIZE_GUIDE: SizeGuideRow[] = [
+  { size: "S", waist: '30"', hip: '38"', thigh: '23"', inseam: '29"', hem: '15"' },
+  { size: "M", waist: '32"', hip: '40"', thigh: '24"', inseam: '30"', hem: '15.5"' },
+  { size: "L", waist: '34"', hip: '42"', thigh: '25"', inseam: '31"', hem: '16"' },
+  { size: "XL", waist: '36"', hip: '44"', thigh: '26"', inseam: '31"', hem: '16.5"' },
+];
