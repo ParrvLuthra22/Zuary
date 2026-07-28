@@ -191,6 +191,36 @@ html.lenis body {
   color: var(--carbon);
 }
 
+@keyframes zuary-marquee {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@keyframes zuary-rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes zuary-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(0.82);
+  }
+}
+
 /* The native cursor is hidden below, so keyboard focus has to be unmistakable.
    `:where()` keeps specificity at zero, letting shadcn's own focus-visible
    rings override this on the components that ship one. Never put this inside a

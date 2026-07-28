@@ -27,7 +27,9 @@ const jetbrainsMono = JetBrains_Mono({
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
-  weight: ["300", "400", "500"],
+  // 300 was in the original spec but nothing uses it, and dropping it takes a
+  // third off the body font — the largest file on the wire.
+  weight: ["400", "500"],
   display: "swap",
 });
 
@@ -35,9 +37,9 @@ const eczar = Eczar({
   variable: "--font-eczar",
   subsets: ["devanagari"],
   weight: ["500"],
+  // Devanagari is decorative here — the Latin name sits beside it everywhere,
+  // so it never needs to be on the critical path.
   display: "swap",
-  // Devanagari never appears above the fold — preloading it puts ~44 KB of
-  // high-priority weight in front of the text that does.
   preload: false,
 });
 

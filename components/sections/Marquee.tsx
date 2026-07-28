@@ -1,5 +1,4 @@
-"use client";
-
+import { TriangleA } from "@/components/layout/Wordmark";
 import { cn } from "@/lib/utils";
 
 type MarqueeProps = {
@@ -7,31 +6,36 @@ type MarqueeProps = {
   /** Seconds for one full pass. Larger is slower. */
   speed?: number;
   reverse?: boolean;
+  /** outline = hairline rules top and bottom, no fill. */
+  variant?: "outline" | "plain";
   className?: string;
 };
 
 /**
- * Two identical tracks side by side, the pair translated by -50%. The seam
- * lands off-screen, so the loop reads as continuous.
+ * Two identical runs inside one track, translated by -50%. The seam lands
+ * off-screen, so the loop reads as continuous. The track is clipped by an
+ * overflow-hidden parent so it can never widen the page.
  */
 export function Marquee({
   items,
   speed = 28,
   reverse = false,
+  variant = "outline",
   className,
 }: MarqueeProps) {
-  const track = [...items, ...items];
+  const run = [...items, ...items];
 
   return (
     <div
       className={cn(
-        "relative flex overflow-hidden border-y border-line py-4",
+        "relative flex w-full max-w-full overflow-hidden py-6",
+        variant === "outline" && "border-y border-line",
         className,
       )}
       aria-hidden
     >
       <div
-        className="flex shrink-0 animate-[marquee_var(--marquee-duration)_linear_infinite] items-center gap-10 pr-10 motion-reduce:animate-none"
+        className="flex w-max shrink-0 animate-[zuary-marquee_var(--marquee-duration)_linear_infinite] items-center motion-reduce:animate-none"
         style={
           {
             "--marquee-duration": `${speed}s`,
@@ -39,20 +43,15 @@ export function Marquee({
           } as React.CSSProperties
         }
       >
-        {track.map((item, i) => (
-          <span key={`${item}-${i}`} className="t-label text-fg-muted whitespace-nowrap">
-            {item}
-            <span className="ml-10 text-accent">/</span>
+        {run.map((item, i) => (
+          <span key={`${item}-${i}`} className="flex items-center">
+            <span className="t-label whitespace-nowrap text-fg-muted">
+              {item}
+            </span>
+            <TriangleA className="mx-8 text-[0.5rem]" />
           </span>
         ))}
       </div>
-
-      <style>{`
-        @keyframes marquee {
-          from { transform: translate3d(0, 0, 0); }
-          to   { transform: translate3d(-50%, 0, 0); }
-        }
-      `}</style>
     </div>
   );
 }

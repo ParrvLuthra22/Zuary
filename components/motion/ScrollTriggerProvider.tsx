@@ -36,6 +36,16 @@ export function ScrollTriggerProvider({
       };
 
       window.addEventListener("resize", onResize);
+
+      // Web fonts change text metrics, so measurements taken before they land
+      // are wrong. Only refresh while the page is still at the top: Lenis owns
+      // the scroll position, and a refresh after the visitor has moved yanks
+      // them somewhere else.
+      document.fonts?.ready.then(() => {
+        if (disposed || window.scrollY > 4) return;
+        ScrollTrigger.refresh();
+      });
+
       cleanup = () => {
         clearTimeout(timer);
         window.removeEventListener("resize", onResize);

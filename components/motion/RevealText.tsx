@@ -13,6 +13,8 @@ type RevealTextProps = {
   className?: string;
   as?: "h1" | "h2" | "h3" | "p" | "span" | "div";
   delay?: number;
+  /** Per-character travel time. Homepage sections cap section motion at 600ms. */
+  duration?: number;
 };
 
 /**
@@ -26,6 +28,7 @@ export function RevealText({
   className,
   as = "div",
   delay = 0,
+  duration = dur.mid,
 }: RevealTextProps) {
   const units = by === "word" ? children.split(" ") : children.split("\n");
   const Tag = motion[as];
@@ -51,7 +54,7 @@ export function RevealText({
               hidden: { y: "110%" },
               visible: { y: "0%" },
             }}
-            transition={{ duration: dur.slow, ease: [...easeOut] }}
+            transition={{ duration, ease: [...easeOut] }}
           >
             {unit}
           </motion.span>
