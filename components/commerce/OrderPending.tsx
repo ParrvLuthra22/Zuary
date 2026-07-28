@@ -57,7 +57,7 @@ export function OrderPending({ orderId }: { orderId: string }) {
         </>
       ) : (
         <>
-          <Loader2 className="size-6 animate-spin text-accent" />
+          <Loader2 className="size-6 animate-spin text-accent-ink" />
           <p className="t-display-sm">Confirming your payment.</p>
           <p className="t-label text-fg-muted">This takes a few seconds.</p>
         </>

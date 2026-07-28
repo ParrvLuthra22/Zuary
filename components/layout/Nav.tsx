@@ -98,7 +98,7 @@ export function Nav() {
         )}
       >
         <nav className="grid grid-cols-[auto_1fr_auto] items-center gap-4 px-6 py-5 md:px-10 md:py-6">
-          <Link href="/" aria-label="ZUARY — home" className="justify-self-start">
+          <Link href="/" className="justify-self-start">
             <Wordmark className="t-display-sm !text-xl" />
           </Link>
 
@@ -187,7 +187,7 @@ function NavLink({
       aria-label={label}
       className={cn(
         "t-label group relative flex py-1",
-        active ? "text-accent" : "text-fg-muted",
+        active ? "text-accent-ink" : "text-fg-muted",
       )}
     >
       <span aria-hidden className="flex">
@@ -202,7 +202,7 @@ function NavLink({
               style={{ transitionDuration: "420ms", transitionDelay: `${i * PER_CHAR_MS}ms` }}
             >
               <span style={{ lineHeight: 1 }}>{char}</span>
-              <span className="text-accent" style={{ lineHeight: 1 }}>
+              <span className="text-accent-ink" style={{ lineHeight: 1 }}>
                 {char}
               </span>
             </span>
@@ -262,7 +262,7 @@ function MobileNav({
                     href={link.href}
                     className={cn(
                       "t-display-sm block py-2",
-                      pathname.startsWith(link.href) ? "text-accent" : "text-fg",
+                      pathname.startsWith(link.href) ? "text-accent-ink" : "text-fg",
                     )}
                   >
                     {link.label}

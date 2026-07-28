@@ -127,7 +127,7 @@ export function TrioRail({ products }: { products: Product[] }) {
 
   const heading = (
     <header className="px-6 pb-10 md:px-12">
-      <p className="t-label text-accent">The trio</p>
+      <p className="t-label text-accent-ink">The trio</p>
       <RevealText as="h2" className="t-display-md mt-3">
         Three cuts. One block.
       </RevealText>
@@ -207,8 +207,7 @@ function Panel({ product }: { product: Product }) {
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={product.images[0]}
-            alt=""
-            aria-hidden
+            alt={`${product.name}, ${product.colour} ${product.fit} trousers`}
             className="h-full w-full object-cover"
             onError={() => setFailed(true)}
           />
@@ -227,14 +226,14 @@ function Panel({ product }: { product: Product }) {
 
         <div className="mt-2 flex flex-wrap items-baseline gap-3">
           <h3 className="t-display-md text-off-white">{product.name}</h3>
-          <span className="t-deva text-lg text-accent">{product.deva}</span>
+          <span className="t-deva text-lg text-accent-ink">{product.deva}</span>
         </div>
 
         <div className="mt-3 flex items-center justify-between">
           <span className="font-mono text-sm text-off-white/80">
             {formatINR(product.price)}
           </span>
-          <span className="t-label text-accent">View →</span>
+          <span className="t-label text-accent-ink">View →</span>
         </div>
       </div>
     </Link>

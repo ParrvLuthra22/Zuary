@@ -23,7 +23,7 @@ export default function DropsPage() {
       {/* HeroScrub carries the homepage's own choreography, so the drop page
           keeps a plain full-viewport opener of its own. */}
       <header className="flex h-svh flex-col items-center justify-center px-6 text-center">
-        <p className="t-label text-accent">{currentDrop.season}</p>
+        <p className="t-label text-accent-ink">{currentDrop.season}</p>
         <h1 className="t-display-xl mt-4">{currentDrop.title}</h1>
         <p className="t-label mt-6 text-fg-muted">{currentDrop.tagline}</p>
       </header>

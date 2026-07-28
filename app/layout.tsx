@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Eczar, Inter, Inter_Tight, JetBrains_Mono } from "next/font/google";
 
+import { CartAnnouncer } from "@/components/commerce/CartAnnouncer";
+import { SkipLink } from "@/components/layout/SkipLink";
 import { ThemeProvider } from "@/components/layout/ThemeProvider";
 import { PageTransition } from "@/components/motion/PageTransition";
 import { ScrollTriggerProvider } from "@/components/motion/ScrollTriggerProvider";
@@ -87,14 +89,18 @@ export default function RootLayout({
     >
       <body className="antialiased">
         <ThemeProvider>
+          <SkipLink />
           <SmoothScroll>
             <ScrollTriggerProvider>
               <PageTransition>
-                <main>{children}</main>
+                <main id="main" tabIndex={-1}>
+                  {children}
+                </main>
               </PageTransition>
             </ScrollTriggerProvider>
           </SmoothScroll>
           <TrouserCursor />
+          <CartAnnouncer />
           <Toaster />
         </ThemeProvider>
       </body>

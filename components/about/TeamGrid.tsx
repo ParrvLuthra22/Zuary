@@ -12,7 +12,7 @@ export function TeamGrid({ members }: { members: TeamMember[] }) {
         <li key={member.name} className="border border-line bg-bg-raised p-8">
           <Avatar member={member} />
           <h3 className="t-display-sm mt-6">{member.name}</h3>
-          <p className="t-label mt-2 text-accent">{member.role}</p>
+          <p className="t-label mt-2 text-accent-ink">{member.role}</p>
           <p className="mt-4 text-sm leading-relaxed text-fg-muted">
             {member.focus}
           </p>
@@ -41,7 +41,7 @@ function Avatar({ member }: { member: TeamMember }) {
       ) : (
         <span
           aria-hidden
-          className="t-display-sm absolute inset-0 grid place-items-center text-accent"
+          className="t-display-sm absolute inset-0 grid place-items-center text-accent-ink"
         >
           {member.name.charAt(0)}
         </span>

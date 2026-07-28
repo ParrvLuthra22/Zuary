@@ -25,7 +25,7 @@ export function SizeSelector({
     <div className={cn("space-y-3", className)}>
       <div className="flex items-baseline justify-between">
         <span className="t-label text-fg-muted">Size</span>
-        <a href="/about#sizing" className="t-label text-accent hover:underline">
+        <a href="/about#sizing" className="t-label text-accent-ink hover:underline">
           Size guide
         </a>
       </div>
@@ -51,7 +51,7 @@ export function SizeSelector({
                   "flex h-11 min-w-14 cursor-pointer items-center justify-center rounded-sm border border-line px-4",
                   "font-mono text-sm transition-colors duration-[--dur-micro]",
                   "hover:border-fg-muted",
-                  "peer-data-[state=checked]:border-accent peer-data-[state=checked]:text-accent",
+                  "peer-data-[state=checked]:border-accent peer-data-[state=checked]:text-accent-ink",
                   disabled &&
                     "pointer-events-none text-fg-muted/40 line-through opacity-50",
                 )}

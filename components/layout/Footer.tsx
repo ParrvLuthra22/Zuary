@@ -32,6 +32,7 @@ export function Footer() {
           margin has to clear that before it bites into the letterforms. */}
       <div className="overflow-hidden" aria-hidden>
         <Wordmark
+          aria-hidden
           className="font-display -mb-[0.3em] flex w-full justify-center font-black whitespace-nowrap text-fg/8"
           triangleClassName="bg-current"
           style={{ fontSize: "clamp(4rem, 14vw, 11rem)", letterSpacing: "-0.04em" }}
@@ -138,7 +139,7 @@ function Newsletter() {
       <p className="t-label mb-5 text-fg-muted">The next drop</p>
 
       {status === "done" ? (
-        <p className="font-mono text-sm text-accent">You&rsquo;re on the list.</p>
+        <p className="font-mono text-sm text-accent-ink">You&rsquo;re on the list.</p>
       ) : (
         <form onSubmit={submit} className="flex gap-2">
           <Input

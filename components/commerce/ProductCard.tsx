@@ -45,7 +45,7 @@ export function ProductCard({
           {!primaryFailed ? (
             <Image
               src={product.images[0]}
-              alt={product.name}
+              alt={`${product.name}, ${product.colour} ${product.fit} trousers`}
               fill
               priority={priority}
               sizes={SIZES_ATTR}

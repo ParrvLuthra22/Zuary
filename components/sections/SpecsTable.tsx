@@ -43,7 +43,7 @@ export function SpecsTable({ products }: { products: Product[] }) {
             <span
               key={product.slug}
               role="columnheader"
-              className="t-label text-accent"
+              className="t-label text-accent-ink"
             >
               {product.name}
             </span>

@@ -171,14 +171,15 @@ export function CheckoutForm() {
             className="mt-12 space-y-5"
             onFocus={() => setStep("contact")}
           >
-            <legend className="t-label mb-5 text-accent">Contact</legend>
+            <legend className="t-label mb-5 text-accent-ink">Contact</legend>
             <Field label="Email" error={errors.contact?.email?.message}>
-              {(id) => (
+              {(id, describedBy) => (
                 <input
                   id={id}
                   type="email"
                   autoComplete="email"
                   placeholder=" "
+                  aria-describedby={describedBy}
                   {...register("contact.email")}
                   className={FIELD}
                 />
@@ -189,13 +190,14 @@ export function CheckoutForm() {
               prefix="+91"
               error={errors.contact?.phone?.message}
             >
-              {(id) => (
+              {(id, describedBy) => (
                 <input
                   id={id}
                   type="tel"
                   inputMode="numeric"
                   autoComplete="tel-national"
                   placeholder=" "
+                  aria-describedby={describedBy}
                   {...register("contact.phone")}
                   className={cn(FIELD, "pl-14")}
                 />
@@ -207,16 +209,17 @@ export function CheckoutForm() {
             className="mt-12 space-y-5"
             onFocus={() => setStep("shipping")}
           >
-            <legend className="t-label mb-5 text-accent">Shipping</legend>
+            <legend className="t-label mb-5 text-accent-ink">Shipping</legend>
 
             <input type="hidden" {...register("address.country")} />
 
             <Field label="Full name" error={errors.address?.name?.message}>
-              {(id) => (
+              {(id, describedBy) => (
                 <input
                   id={id}
                   autoComplete="name"
                   placeholder=" "
+                  aria-describedby={describedBy}
                   {...register("address.name")}
                   className={FIELD}
                 />
@@ -224,11 +227,12 @@ export function CheckoutForm() {
             </Field>
 
             <Field label="Address line 1" error={errors.address?.line1?.message}>
-              {(id) => (
+              {(id, describedBy) => (
                 <input
                   id={id}
                   autoComplete="address-line1"
                   placeholder=" "
+                  aria-describedby={describedBy}
                   {...register("address.line1")}
                   className={FIELD}
                 />
@@ -236,11 +240,12 @@ export function CheckoutForm() {
             </Field>
 
             <Field label="Address line 2 (optional)">
-              {(id) => (
+              {(id, describedBy) => (
                 <input
                   id={id}
                   autoComplete="address-line2"
                   placeholder=" "
+                  aria-describedby={describedBy}
                   {...register("address.line2")}
                   className={FIELD}
                 />
@@ -248,10 +253,11 @@ export function CheckoutForm() {
             </Field>
 
             <Field label="Landmark (optional)">
-              {(id) => (
+              {(id, describedBy) => (
                 <input
                   id={id}
                   placeholder=" "
+                  aria-describedby={describedBy}
                   {...register("address.landmark")}
                   className={FIELD}
                 />
@@ -260,23 +266,25 @@ export function CheckoutForm() {
 
             <div className="grid gap-5 sm:grid-cols-2">
               <Field label="City" error={errors.address?.city?.message}>
-                {(id) => (
+                {(id, describedBy) => (
                   <input
                     id={id}
                     autoComplete="address-level2"
                     placeholder=" "
+                  aria-describedby={describedBy}
                     {...register("address.city")}
                     className={FIELD}
                   />
                 )}
               </Field>
               <Field label="PIN code" error={errors.address?.pincode?.message}>
-                {(id) => (
+                {(id, describedBy) => (
                   <input
                     id={id}
                     inputMode="numeric"
                     autoComplete="postal-code"
                     placeholder=" "
+                  aria-describedby={describedBy}
                     {...register("address.pincode")}
                     className={FIELD}
                   />
@@ -389,13 +397,15 @@ function Field({
   label: string;
   error?: string;
   prefix?: string;
-  children: (id: string) => React.ReactNode;
+  /** Receives the input id and the id of its error message, if any. */
+  children: (id: string, describedBy?: string) => React.ReactNode;
 }) {
   const [id] = useState(() => `f${++uid}`);
+  const errorId = `${id}-error`;
   return (
     <div>
       <div className="relative">
-        {children(id)}
+        {children(id, error ? errorId : undefined)}
         {prefix ? (
           <span className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 font-mono text-sm text-fg-muted">
             {prefix}
@@ -412,14 +422,16 @@ function Field({
             "transition-all duration-[--dur-micro]",
             "peer-placeholder-shown:peer-not-focus:top-1/2",
             "peer-placeholder-shown:peer-not-focus:-translate-y-1/2",
-            "peer-focus:text-accent",
+            "peer-focus:text-accent-ink",
           )}
         >
           {label}
         </label>
       </div>
       {error ? (
-        <p className="t-label mt-2 text-accent-deep">{error}</p>
+        <p id={errorId} role="alert" className="t-label mt-2 text-accent-deep">
+          {error}
+        </p>
       ) : null}
     </div>
   );
@@ -440,6 +452,8 @@ function StateSelect({
       <select
         id="state"
         defaultValue=""
+        aria-describedby={error ? "state-error" : undefined}
+        aria-invalid={Boolean(error)}
         {...registration}
         className="h-14 w-full rounded-sm border border-line bg-bg px-4 font-mono text-sm text-fg outline-none transition-colors duration-[--dur-micro] focus:border-accent"
       >
@@ -461,7 +475,11 @@ function StateSelect({
           ))}
         </optgroup>
       </select>
-      {error ? <p className="t-label mt-2 text-accent-deep">{error}</p> : null}
+      {error ? (
+        <p id="state-error" role="alert" className="t-label mt-2 text-accent-deep">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -475,7 +493,7 @@ function Steps({ active }: { active: Step }) {
           <span
             className={cn(
               "t-label transition-colors duration-[--dur-micro]",
-              s === active ? "text-accent" : "text-fg-muted",
+              s === active ? "text-accent-ink" : "text-fg-muted",
             )}
             aria-current={s === active ? "step" : undefined}
           >

@@ -191,7 +191,7 @@ function Caption({
         inline ? "" : "absolute bottom-0 left-0 p-6 md:p-12",
       )}
     >
-      <p className="t-label text-accent">
+      <p className="t-label text-accent-ink">
         {String(index).padStart(2, "0")} / {String(total).padStart(2, "0")}
       </p>
       <p className={cn("mt-3 text-lg", inline ? "text-fg" : "text-off-white")}>
@@ -200,7 +200,7 @@ function Caption({
       {product ? (
         <Link
           href={`/products/${product.slug}`}
-          className="t-label mt-3 inline-block text-accent hover:underline"
+          className="t-label mt-3 inline-block text-accent-ink hover:underline"
         >
           {product.name} →
         </Link>

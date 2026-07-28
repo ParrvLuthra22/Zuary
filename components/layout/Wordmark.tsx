@@ -5,12 +5,19 @@ type WordmarkProps = {
   /** The A is a CSS triangle — override its fill when the mark is tinted. */
   triangleClassName?: string;
   style?: React.CSSProperties;
+  "aria-hidden"?: boolean;
 };
 
 /** ZU▲RY. The A is a clip-path triangle, sized in em so it tracks font-size. */
-export function Wordmark({ className, triangleClassName, style }: WordmarkProps) {
+export function Wordmark({
+  className,
+  triangleClassName,
+  style,
+  "aria-hidden": ariaHidden,
+}: WordmarkProps) {
   return (
     <span
+      aria-hidden={ariaHidden}
       className={cn("inline-flex items-center leading-none", className)}
       style={style}
     >

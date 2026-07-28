@@ -13,7 +13,7 @@ export default function OrdersPage() {
   return (
     <div className="px-6 pt-16 pb-24 md:px-12">
       <header>
-        <p className="t-label text-accent">Track</p>
+        <p className="t-label text-accent-ink">Track</p>
         <h1 className="t-display-lg mt-4">Orders</h1>
       </header>
 

@@ -81,7 +81,7 @@ export function MaterialScroll() {
 
       <RevealText
         as="h2"
-        className="t-display-lg mt-20 max-w-3xl text-accent md:mt-32"
+        className="t-display-lg mt-20 max-w-3xl text-accent-ink md:mt-32"
       >
         Not the logo.
       </RevealText>

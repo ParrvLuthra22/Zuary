@@ -107,7 +107,7 @@ function ProductChapter({
               >
                 <Image
                   src={product.images[0]}
-                  alt={product.name}
+                  alt={`${product.name}, ${product.colour} ${product.fit} trousers`}
                   fill
                   loading="lazy"
                   sizes="(min-width: 768px) 50vw, 100vw"
@@ -120,7 +120,7 @@ function ProductChapter({
         </div>
 
         <div className="flex flex-col justify-center px-6 py-20 md:min-h-svh md:w-1/2 md:px-16">
-          <p className="t-label text-accent">{seriesLabel(product.series)}</p>
+          <p className="t-label text-accent-ink">{seriesLabel(product.series)}</p>
 
           <h2 className="t-display-lg mt-4">{product.name}</h2>
 

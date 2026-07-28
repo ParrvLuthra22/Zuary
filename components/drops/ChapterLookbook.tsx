@@ -24,7 +24,7 @@ const SIZES: Record<LookbookSpan, string> = {
 export function ChapterLookbook({ images }: { images: LookbookImage[] }) {
   return (
     <section className="border-t border-line px-6 py-24 md:px-12">
-      <p className="t-label text-accent">Lookbook</p>
+      <p className="t-label text-accent-ink">Lookbook</p>
       <h2 className="t-display-md mt-3">Shot on location.</h2>
 
       <div className="mt-12 grid grid-cols-1 gap-2 md:grid-cols-12">
@@ -73,7 +73,7 @@ function Plate({
       <figcaption
         className={cn(
           "pointer-events-none absolute bottom-0 left-0 hidden p-4 md:block",
-          "t-label translate-y-full text-accent opacity-0",
+          "t-label translate-y-full text-accent-ink opacity-0",
           "transition-[translate,opacity] duration-[--dur-fast] ease-[--ease-out]",
           "group-hover:translate-y-0 group-hover:opacity-100",
         )}

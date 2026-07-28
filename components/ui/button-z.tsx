@@ -18,7 +18,7 @@ const BASE =
 
 const VARIANTS = {
   primary: "bg-accent text-carbon hover:bg-accent-soft",
-  outline: "border border-line text-fg hover:border-accent hover:text-accent",
+  outline: "border border-line text-fg hover:border-accent hover:text-accent-ink",
 } as const;
 
 const SIZES = {

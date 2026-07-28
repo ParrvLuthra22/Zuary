@@ -40,7 +40,7 @@ export function AddToCart({ product }: { product: Product }) {
       />
 
       {error && !size ? (
-        <p className="t-label text-accent">Select a size to continue.</p>
+        <p className="t-label text-accent-ink">Select a size to continue.</p>
       ) : null}
 
       <Magnetic strength={6} className="block w-full">

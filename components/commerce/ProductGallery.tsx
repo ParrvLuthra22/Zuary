@@ -93,7 +93,7 @@ function Frame({
       {!failed ? (
         <Image
           src={src}
-          alt={`${product.name} — view ${index + 1}`}
+          alt={`${product.name}, ${product.colour} ${product.fabric.toLowerCase()} trousers in a ${product.fit} cut — view ${index + 1} of ${product.images.length}`}
           fill
           priority={priority}
           loading={priority ? undefined : "lazy"}

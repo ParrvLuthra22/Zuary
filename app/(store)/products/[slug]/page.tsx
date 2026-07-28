@@ -68,7 +68,7 @@ export default async function ProductPage({ params }: Params) {
       <CareCards product={product} />
 
       <section className="px-6 py-24 md:px-12">
-        <p className="t-label text-accent">The other two</p>
+        <p className="t-label text-accent-ink">The other two</p>
         <h2 className="t-display-md mt-3">Same block, different cut.</h2>
 
         <ul className="mt-12 grid grid-cols-1 gap-x-6 gap-y-16 sm:grid-cols-2 lg:grid-cols-3">
@@ -118,7 +118,7 @@ function FabricBand({ product }: { product: Product }) {
       </div>
 
       <div className="px-6 pb-16 md:px-12 md:py-24">
-        <p className="t-label text-accent">Fabric</p>
+        <p className="t-label text-accent-ink">Fabric</p>
         <h2 className="t-display-sm mt-3">{product.fabric}.</h2>
         <p className="mt-6 max-w-prose text-sm leading-relaxed text-fg-muted">
           {product.fabricStory}
@@ -142,7 +142,7 @@ function CareCards({ product }: { product: Product }) {
 
   return (
     <section className="border-t border-line px-6 py-24 md:px-12">
-      <p className="t-label text-accent">Care</p>
+      <p className="t-label text-accent-ink">Care</p>
       <h2 className="t-display-sm mt-3">Keep it sharp.</h2>
 
       <ul className="mt-12 grid gap-6 md:grid-cols-3">
@@ -151,7 +151,7 @@ function CareCards({ product }: { product: Product }) {
             key={line}
             className="rounded-sm border border-line bg-bg-raised p-8"
           >
-            <span className="block text-accent">{icons[i]}</span>
+            <span className="block text-accent-ink">{icons[i]}</span>
             <p className="mt-6 text-sm text-fg">{line}</p>
           </li>
         ))}

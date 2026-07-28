@@ -28,7 +28,7 @@ export default function LookbookPage() {
   return (
     <div className="pb-24">
       <header className="px-6 pt-8 pb-16 md:px-12">
-        <p className="t-label text-accent">Lookbook</p>
+        <p className="t-label text-accent-ink">Lookbook</p>
         <RevealText as="h1" className="t-display-lg mt-4">
           Drop 01.
         </RevealText>
@@ -49,7 +49,7 @@ export default function LookbookPage() {
       </div>
 
       <section className="px-6 pt-24 md:px-12">
-        <p className="t-label text-accent">Shop the drop</p>
+        <p className="t-label text-accent-ink">Shop the drop</p>
         <h2 className="t-display-md mt-3">All three, cut from one block.</h2>
 
         <ul className="mt-12 grid grid-cols-1 gap-x-6 gap-y-16 sm:grid-cols-2 lg:grid-cols-3">

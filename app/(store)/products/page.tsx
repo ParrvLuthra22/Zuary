@@ -14,7 +14,7 @@ export default function ProductsPage() {
   return (
     <div className="pt-16">
       <header className="px-6 md:px-12">
-        <p className="t-label text-accent">Everything</p>
+        <p className="t-label text-accent-ink">Everything</p>
         <h1 className="t-display-lg mt-4">Products</h1>
       </header>
 

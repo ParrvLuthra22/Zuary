@@ -99,7 +99,7 @@ export function BuyBox({ product, stock }: BuyBoxProps) {
         <h1 className="t-display-lg mt-3">{product.name}</h1>
 
         <p className="mt-2">
-          <span className="t-deva text-xl text-accent">{product.deva}</span>
+          <span className="t-deva text-xl text-accent-ink">{product.deva}</span>
           <span className="ml-3 text-sm text-fg-muted">
             — {product.devaMeaning}
           </span>
@@ -137,6 +137,7 @@ export function BuyBox({ product, stock }: BuyBoxProps) {
           <Trust icon={<MapPin className="size-4" />}>Made in Tirupur</Trust>
         </ul>
 
+        <h2 className="sr-only">Product details</h2>
         <Accordion type="single" collapsible className="mt-10">
           <AccordionItem value="fabric" className="border-line">
             <AccordionTrigger className="t-label">
@@ -207,7 +208,7 @@ function Trust({
 }) {
   return (
     <li className="flex items-center gap-3 text-fg-muted">
-      <span className="text-accent">{icon}</span>
+      <span className="text-accent-ink">{icon}</span>
       <span className="t-label">{children}</span>
     </li>
   );
@@ -217,7 +218,7 @@ function SizeGuideDialog() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <button type="button" className="t-label text-accent hover:underline">
+        <button type="button" className="t-label text-accent-ink hover:underline">
           Size guide
         </button>
       </DialogTrigger>

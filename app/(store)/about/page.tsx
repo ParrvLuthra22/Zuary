@@ -54,7 +54,7 @@ export default function AboutPage() {
         <div className="max-w-2xl">
           <p className="leading-relaxed text-fg-muted">
             <span
-              className="float-left mt-2 mr-4 font-display leading-[0.75] text-accent"
+              className="float-left mt-2 mr-4 font-display leading-[0.75] text-accent-ink"
               style={{ fontSize: "7rem", fontWeight: 900 }}
               aria-hidden
             >
@@ -145,21 +145,21 @@ export default function AboutPage() {
 
       {/* 3 — team */}
       <section className="mt-28 px-6 md:px-12">
-        <p className="t-label text-accent">The team</p>
+        <p className="t-label text-accent-ink">The team</p>
         <h2 className="t-display-md mt-3">Five people.</h2>
         <TeamGrid members={TEAM} />
       </section>
 
       {/* 4 — made in India */}
       <section className="mt-28 px-6 md:px-12">
-        <p className="t-label text-accent">Made in India</p>
+        <p className="t-label text-accent-ink">Made in India</p>
         <h2 className="t-display-md mt-3">Three cities.</h2>
 
         <ul className="mt-12 grid gap-10 md:grid-cols-3">
           {CITIES.map((entry) => (
             <li key={entry.city} className="border-t border-line pt-6">
               <h3 className="t-display-sm">{entry.city}</h3>
-              <p className="t-label mt-2 text-accent">{entry.label}</p>
+              <p className="t-label mt-2 text-accent-ink">{entry.label}</p>
               <p className="mt-4 text-sm leading-relaxed text-fg-muted">
                 {entry.line}
               </p>
@@ -174,7 +174,7 @@ export default function AboutPage() {
 
       {/* sizing reference, linked from every product page */}
       <section id="sizing" className="mt-28 scroll-mt-28 px-6 md:px-12">
-        <p className="t-label text-accent">Sizing</p>
+        <p className="t-label text-accent-ink">Sizing</p>
         <h2 className="t-display-md mt-3">One block, four sizes.</h2>
         <p className="mt-6 max-w-xl text-sm text-fg-muted">
           Measurements are of the garment laid flat, in inches, not of the body.

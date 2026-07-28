@@ -77,14 +77,14 @@ function Plate({
       />
 
       <figcaption className="absolute bottom-0 left-0 p-4">
-        <p className="t-label text-accent">
+        <p className="t-label text-accent-ink">
           {String(index).padStart(2, "0")} / {String(total).padStart(2, "0")}
         </p>
         <p className="mt-1.5 text-sm text-off-white">{image.caption}</p>
         {product ? (
           <Link
             href={`/products/${product.slug}`}
-            className="t-label mt-2 inline-block text-off-white/70 hover:text-accent"
+            className="t-label mt-2 inline-block text-off-white/70 hover:text-accent-ink"
           >
             {product.name} →
           </Link>

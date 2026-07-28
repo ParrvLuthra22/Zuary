@@ -24,7 +24,7 @@ export function ChapterClose() {
       className="flex min-h-svh flex-col items-center justify-center gap-10 bg-carbon px-6 text-center"
     >
       <motion.p
-        className="t-display-xl text-accent"
+        className="t-display-xl text-accent-ink"
         style={cinematic ? { scale } : undefined}
       >
         Cut sharp.

@@ -28,7 +28,7 @@ export default function CartPage() {
   return (
     <div className="px-6 pt-8 pb-24 md:px-12">
       <header>
-        <p className="t-label text-accent">Bag</p>
+        <p className="t-label text-accent-ink">Bag</p>
         <h1 className="t-display-lg mt-4">Cart</h1>
         {count > 0 ? (
           <p className="t-label mt-3 text-fg-muted">

@@ -18,7 +18,7 @@ export default function ShopPage() {
   return (
     <div className="pb-24">
       <header className="px-6 pt-8 pb-12 md:px-12">
-        <p className="t-label text-accent">Shop</p>
+        <p className="t-label text-accent-ink">Shop</p>
         <RevealText as="h1" className="t-display-lg mt-4">
           All trousers.
         </RevealText>
@@ -29,6 +29,8 @@ export default function ShopPage() {
 
       {/* ShopBrowser reads search params, so it needs a boundary to keep the
           rest of the page static. */}
+      <h2 className="sr-only">Trousers</h2>
+
       <Suspense fallback={<div className="min-h-[60vh]" />}>
         <ShopBrowser products={PRODUCTS} />
       </Suspense>
@@ -46,7 +48,7 @@ export default function ShopPage() {
       />
 
       <section className="flex flex-col items-center px-6 py-24 text-center">
-        <p className="t-label text-accent">Next run</p>
+        <p className="t-label text-accent-ink">Next run</p>
         <h2 className="t-display-md mt-4">More cuts landing Q4.</h2>
         <p className="mt-4 max-w-md text-fg-muted">
           One block, more fabrics. Get told before the run opens.

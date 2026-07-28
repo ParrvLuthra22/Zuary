@@ -27,6 +27,10 @@
   --fg-muted: #9ba1a5;
   --line: rgba(244, 245, 243, 0.1);
   --accent: var(--hazard);
+  /* Accent used as TEXT. On graphite the brand orange is 5.9:1 and fine, but
+     on the light theme's paper it is 2.7:1 — failing AA even for large text —
+     so the light theme darkens it. Fills keep --accent either way. */
+  --accent-ink: var(--hazard);
 
   /* ── Motion ────────────────────────────────────────────── */
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
@@ -92,6 +96,9 @@
   --fg-muted: #6a7075;
   --line: rgba(28, 30, 32, 0.12);
 
+  /* 5.21:1 on paper, 4.98:1 on raised, 5.45:1 on white. */
+  --accent-ink: #b8431a;
+
   /* Everything else cascades — only the inverted pair needs restating. */
   --primary: var(--carbon);
   --primary-foreground: var(--paper);
@@ -106,6 +113,7 @@
   --color-fg-muted: var(--fg-muted);
   --color-line: var(--line);
   --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
   --color-accent-soft: var(--hazard-soft);
   --color-accent-deep: var(--hazard-deep);
   --color-carbon: var(--carbon);
@@ -243,7 +251,7 @@ html.lenis body {
    media query — focus must be visible on every device. */
 :where(a, button, [role="button"], input, textarea, select, summary, [tabindex]):focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 3px;
+  outline-offset: 2px;
   border-radius: 2px;
 }
 
@@ -329,7 +337,9 @@ html.lenis body {
 
   .t-label {
     font-family: var(--font-mono), ui-monospace, monospace;
-    font-size: 0.6875rem;
+    /* 12px, not 11px: below 12 Lighthouse counts it as illegible and it is
+       genuinely hard to read at this letter-spacing. */
+    font-size: 0.75rem;
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.18em;

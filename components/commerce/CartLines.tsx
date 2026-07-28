@@ -25,7 +25,7 @@ export function CartWarning({ shown }: { shown: boolean }) {
           transition={{ duration: dur.fast, ease: [...easeOut] }}
           className="overflow-hidden"
         >
-          <p className="t-label mx-6 my-4 flex items-start gap-2 border border-accent/40 bg-accent/10 p-3 text-accent">
+          <p className="t-label mx-6 my-4 flex items-start gap-2 border border-accent/40 bg-accent/10 p-3 text-accent-ink">
             <TriangleAlert className="mt-px size-3.5 shrink-0" />
             Your bag was updated to match current prices and stock.
           </p>
@@ -84,7 +84,7 @@ export function CartLineList({
                       <Link
                         href={`/products/${line.slug}`}
                         onClick={onNavigate}
-                        className="font-mono text-sm text-fg hover:text-accent"
+                        className="font-mono text-sm text-fg hover:text-accent-ink"
                       >
                         {line.product.name}
                       </Link>
@@ -92,9 +92,9 @@ export function CartLineList({
                         {line.size} · {formatINR(unitPrice)}
                       </p>
                       {soldOut ? (
-                        <p className="t-label mt-1 text-accent">Sold out</p>
+                        <p className="t-label mt-1 text-accent-ink">Sold out</p>
                       ) : stock !== null && stock <= LOW_STOCK ? (
-                        <p className="t-label mt-1 text-accent">
+                        <p className="t-label mt-1 text-accent-ink">
                           Only {stock} left
                         </p>
                       ) : null}

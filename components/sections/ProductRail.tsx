@@ -25,7 +25,7 @@ export function ProductRail({
     <section className={cn("py-20 md:py-28", className)}>
       {(eyebrow || title) && (
         <header className="mb-10 px-6 md:px-12">
-          {eyebrow ? <p className="t-label text-accent">{eyebrow}</p> : null}
+          {eyebrow ? <p className="t-label text-accent-ink">{eyebrow}</p> : null}
           {title ? <h2 className="t-display-md mt-3 text-fg">{title}</h2> : null}
         </header>
       )}

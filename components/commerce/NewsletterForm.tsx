@@ -80,6 +80,7 @@ export function NewsletterForm({
           placeholder="Email"
           aria-label="Email"
           aria-invalid={Boolean(errors.email)}
+          aria-describedby={errors.email ? "newsletter-error" : undefined}
           className="h-12 rounded-sm border-line bg-bg-raised font-mono text-sm"
         />
         <ButtonZ type="submit" disabled={isSubmitting}>
@@ -88,7 +89,13 @@ export function NewsletterForm({
       </div>
 
       {errors.email ? (
-        <p className="t-label mt-3 text-accent">{errors.email.message}</p>
+        <p
+          id="newsletter-error"
+          role="alert"
+          className="t-label mt-3 text-accent-ink"
+        >
+          {errors.email.message}
+        </p>
       ) : null}
       {failure ? <p className="t-label mt-3 text-fg-muted">{failure}</p> : null}
     </form>

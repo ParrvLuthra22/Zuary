@@ -43,7 +43,7 @@ export default async function PolicyPage({ params }: Params) {
   return (
     <article className="px-6 pt-8 pb-24 md:px-12">
       <div className="max-w-2xl">
-        <p className="t-label text-accent">Policy</p>
+        <p className="t-label text-accent-ink">Policy</p>
         <h1 className="t-display-lg mt-4">{policy.title}</h1>
         <p className="mt-5 text-lg text-fg-muted">{policy.summary}</p>
         <p className="t-label mt-6 text-fg-muted">
@@ -70,7 +70,7 @@ export default async function PolicyPage({ params }: Params) {
             <Link
               key={other.slug}
               href={`/policies/${other.slug}`}
-              className="t-label text-fg-muted transition-colors hover:text-accent"
+              className="t-label text-fg-muted transition-colors hover:text-accent-ink"
             >
               {other.title}
             </Link>
