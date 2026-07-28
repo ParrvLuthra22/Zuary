@@ -53,7 +53,10 @@ export function PageTransition({ children }: { children: React.ReactNode }) {
   const reducedMotion = useUIStore((s) => s.reducedMotion);
   const lenis = useLenis();
 
-  if (reducedMotion) {
+  // Checkout must feel instant — no sweep between the form and payment.
+  const instant = reducedMotion || pathname.startsWith("/checkout");
+
+  if (instant) {
     return (
       <AnimatePresence mode="wait" initial={false}>
         <motion.div

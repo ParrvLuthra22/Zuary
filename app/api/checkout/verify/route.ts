@@ -1,11 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { verifySchema } from "@/lib/checkout";
-import {
-  decrementStockForOrder,
-  getOrderByRazorpayOrderId,
-  markOrderStatus,
-} from "@/lib/db/queries";
+import { markOrderFailed, settleOrderPaid } from "@/lib/db/settle";
 import { verifyPaymentSignature } from "@/lib/razorpay/verify";
 
 export const runtime = "nodejs";
@@ -20,7 +16,10 @@ export async function POST(request: Request) {
 
   const parsed = verifySchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Missing payment fields." }, { status: 422 });
+    return NextResponse.json(
+      { error: "Missing payment fields." },
+      { status: 422 },
+    );
   }
 
   const {
@@ -29,37 +28,33 @@ export async function POST(request: Request) {
     razorpay_signature: signature,
   } = parsed.data;
 
-  const valid = verifyPaymentSignature({
-    razorpayOrderId,
-    razorpayPaymentId,
-    signature,
-  });
-
-  if (!valid) {
-    // Signature mismatch means the handoff was tampered with. Do not trust it.
-    await markOrderStatus(razorpayOrderId, "failed").catch(() => {});
+  // HMAC of `<order_id>|<payment_id>` keyed with the API secret, compared in
+  // constant time. A mismatch means the handoff was tampered with.
+  if (
+    !verifyPaymentSignature({ razorpayOrderId, razorpayPaymentId, signature })
+  ) {
+    await markOrderFailed(razorpayOrderId).catch(() => {});
     return NextResponse.json({ error: "Signature mismatch." }, { status: 400 });
   }
 
   try {
-    const existing = await getOrderByRazorpayOrderId(razorpayOrderId);
-    if (!existing) {
+    const result = await settleOrderPaid(razorpayOrderId, razorpayPaymentId);
+
+    if (result.status === "unknown-order") {
       return NextResponse.json({ error: "Unknown order." }, { status: 404 });
     }
-
-    // The webhook may have got here first — settling twice must not double-count.
-    if (existing.status === "paid") {
-      return NextResponse.json({ ok: true, orderId: existing.id });
+    if (result.status === "oversold") {
+      return NextResponse.json(
+        {
+          error:
+            "Payment received but stock ran out. Support will be in touch.",
+          orderId: result.orderId,
+        },
+        { status: 409 },
+      );
     }
 
-    const order = await markOrderStatus(
-      razorpayOrderId,
-      "paid",
-      razorpayPaymentId,
-    );
-    await decrementStockForOrder(order.id);
-
-    return NextResponse.json({ ok: true, orderId: order.id });
+    return NextResponse.json({ ok: true, orderId: result.orderId });
   } catch (error) {
     console.error("[checkout/verify]", error);
     return NextResponse.json(

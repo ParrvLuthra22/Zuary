@@ -1,12 +1,15 @@
-import { neon } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/neon-http";
+import { Pool, neonConfig } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/neon-serverless";
 
 import * as schema from "./schema";
 
 /**
- * Resolved lazily so that importing this module during `next build` — or in any
- * environment without a database — does not throw. The error only surfaces when
- * a query actually runs.
+ * Pooled (WebSocket) rather than the HTTP driver.
+ *
+ * The HTTP driver is stateless and has no `db.transaction()`, so settling a
+ * payment — flip the order to paid and decrement every variant, all or
+ * nothing — is not expressible on it. The pool speaks the same Neon protocol
+ * and works on serverless, so this is the driver checkout needs.
  */
 function connectionString() {
   const url = process.env.DATABASE_URL;
@@ -21,9 +24,15 @@ function connectionString() {
 let cached: ReturnType<typeof create> | undefined;
 
 function create() {
-  return drizzle(neon(connectionString()), { schema });
+  // Node 22 ships a global WebSocket; the driver needs pointing at it.
+  if (!neonConfig.webSocketConstructor && typeof WebSocket !== "undefined") {
+    neonConfig.webSocketConstructor = WebSocket as never;
+  }
+  const pool = new Pool({ connectionString: connectionString() });
+  return drizzle(pool, { schema });
 }
 
+/** Resolved lazily so importing this module without a database does not throw. */
 export const db = new Proxy({} as ReturnType<typeof create>, {
   get(_target, prop, receiver) {
     cached ??= create();

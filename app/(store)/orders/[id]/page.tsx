@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { Separator } from "@/components/ui/separator";
+import { OrderPending } from "@/components/commerce/OrderPending";
+import { TriangleA } from "@/components/layout/Wordmark";
+import { ButtonZ } from "@/components/ui/button-z";
 import { getOrderWithItems } from "@/lib/db/queries";
 import { formatINR } from "@/lib/utils";
 
@@ -11,7 +13,7 @@ export const metadata: Metadata = {
   robots: { index: false },
 };
 
-// Orders are per-visitor and change after payment — never cache this.
+// Status changes the moment the webhook lands — never cache this.
 export const dynamic = "force-dynamic";
 
 type Params = { params: Promise<{ id: string }> };
@@ -25,19 +27,28 @@ export default async function OrderPage({ params }: Params) {
   const order = await getOrderWithItems(id).catch(() => undefined);
   if (!order) notFound();
 
+  const short = order.id.slice(0, 8).toUpperCase();
+
+  // Only a settled order gets the confirmation. Anything else waits on the
+  // webhook rather than claiming something that has not happened.
+  if (order.status !== "paid") {
+    return (
+      <div className="px-6 pt-8 pb-24 md:px-12">
+        <p className="t-label text-fg-muted">Order {short}</p>
+        <OrderPending orderId={order.id} />
+      </div>
+    );
+  }
+
   return (
-    <div className="px-6 pt-16 pb-24 md:px-12">
-      <header>
-        <p className="t-label text-accent">
-          {order.status === "paid" ? "Confirmed" : order.status}
-        </p>
-        <h1 className="t-display-lg mt-4">Thank you.</h1>
-        <p className="mt-4 font-mono text-sm text-fg-muted">
-          Order {order.id.slice(0, 8).toUpperCase()}
-        </p>
+    <div className="px-6 pt-8 pb-24 md:px-12">
+      <header className="flex flex-col items-center py-12 text-center">
+        <TriangleA className="text-5xl" />
+        <h1 className="t-display-md mt-8">Order confirmed.</h1>
+        <p className="t-label mt-4 text-fg-muted">Order {short}</p>
       </header>
 
-      <div className="mt-16 max-w-xl">
+      <div className="mx-auto max-w-xl">
         <ul className="divide-y divide-line border-y border-line">
           {order.items.map((item) => (
             <li
@@ -71,34 +82,41 @@ export default async function OrderPage({ params }: Params) {
           </div>
         </div>
 
-        <Separator className="my-6 bg-line" />
-
-        <div className="flex items-baseline justify-between">
+        <div className="mt-6 flex items-baseline justify-between border-t border-line pt-6">
           <span className="t-label text-fg-muted">Total</span>
-          <span className="font-mono text-lg">{formatINR(order.totalInr)}</span>
+          <span className="t-display-sm">{formatINR(order.totalInr)}</span>
         </div>
 
-        <div className="mt-12">
-          <p className="t-label text-fg-muted">Shipping to</p>
-          <address className="mt-2 text-sm not-italic text-fg-muted">
-            {order.addressJson.name}
-            <br />
-            {order.addressJson.line1}
-            {order.addressJson.line2 ? (
-              <>
-                <br />
-                {order.addressJson.line2}
-              </>
-            ) : null}
-            <br />
-            {order.addressJson.city}, {order.addressJson.state}{" "}
-            {order.addressJson.pincode}
-          </address>
+        <div className="mt-12 grid gap-10 sm:grid-cols-2">
+          <div>
+            <p className="t-label text-fg-muted">Shipping to</p>
+            <address className="mt-2 text-sm text-fg-muted not-italic">
+              {order.addressJson.name}
+              <br />
+              {order.addressJson.line1}
+              {order.addressJson.line2 ? (
+                <>
+                  <br />
+                  {order.addressJson.line2}
+                </>
+              ) : null}
+              <br />
+              {order.addressJson.city}, {order.addressJson.state}{" "}
+              {order.addressJson.pincode}
+            </address>
+          </div>
+
+          <div>
+            <p className="t-label text-fg-muted">Dispatch</p>
+            <p className="mt-2 text-sm text-fg-muted">
+              Ships within 3 working days. Tracking follows by email.
+            </p>
+          </div>
         </div>
 
-        <Link href="/shop" className="t-label mt-12 inline-block text-accent">
-          Back to the drop →
-        </Link>
+        <ButtonZ asChild variant="outline" className="mt-12">
+          <Link href="/shop">Back to the shop</Link>
+        </ButtonZ>
       </div>
     </div>
   );

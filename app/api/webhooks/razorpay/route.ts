@@ -1,10 +1,6 @@
 import { NextResponse } from "next/server";
 
-import {
-  decrementStockForOrder,
-  getOrderByRazorpayOrderId,
-  markOrderStatus,
-} from "@/lib/db/queries";
+import { markOrderFailed, settleOrderPaid } from "@/lib/db/settle";
 import { verifyWebhookSignature } from "@/lib/razorpay/verify";
 
 export const runtime = "nodejs";
@@ -16,13 +12,18 @@ type RazorpayWebhook = {
   };
 };
 
+/**
+ * The source of truth for payment state. /checkout/verify is only the fast
+ * path for the shopper's own tab; if it never runs, this still settles.
+ */
 export async function POST(request: Request) {
   const signature = request.headers.get("x-razorpay-signature");
   if (!signature) {
     return NextResponse.json({ error: "Unsigned." }, { status: 400 });
   }
 
-  // Must be the raw body — re-serialising JSON changes the bytes and the HMAC.
+  // Raw body, verified before anything parses it. Re-serialising JSON changes
+  // the bytes and the HMAC would never match.
   const raw = await request.text();
 
   if (!verifyWebhookSignature(raw, signature)) {
@@ -40,39 +41,32 @@ export async function POST(request: Request) {
   const razorpayOrderId = entity?.order_id;
   const razorpayPaymentId = entity?.id;
 
-  if (!razorpayOrderId) {
-    // Nothing to reconcile, but the signature was good — do not make Razorpay retry.
+  // Signature was good, so acknowledge rather than make Razorpay retry.
+  if (!razorpayOrderId || !razorpayPaymentId) {
     return NextResponse.json({ ok: true, ignored: event.event });
   }
 
   try {
-    const order = await getOrderByRazorpayOrderId(razorpayOrderId);
-    if (!order) {
-      return NextResponse.json({ ok: true, ignored: "unknown order" });
-    }
-
     switch (event.event) {
       case "payment.captured": {
-        // /checkout/verify may have already settled this one.
-        if (order.status === "paid") break;
-        await markOrderStatus(razorpayOrderId, "paid", razorpayPaymentId);
-        await decrementStockForOrder(order.id);
-        break;
+        const result = await settleOrderPaid(razorpayOrderId, razorpayPaymentId);
+        return NextResponse.json({
+          ok: true,
+          status: result.status,
+          idempotent:
+            result.status === "paid" ? result.alreadySettled : undefined,
+        });
       }
       case "payment.failed": {
-        if (order.status === "created") {
-          await markOrderStatus(razorpayOrderId, "failed", razorpayPaymentId);
-        }
-        break;
+        await markOrderFailed(razorpayOrderId, razorpayPaymentId);
+        return NextResponse.json({ ok: true, status: "failed" });
       }
       default:
-        break;
+        return NextResponse.json({ ok: true, ignored: event.event });
     }
-
-    return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("[webhooks/razorpay]", error);
-    // 500 tells Razorpay to retry, which is what we want for a transient fault.
+    // 500 asks Razorpay to retry, which is what a transient fault deserves.
     return NextResponse.json({ error: "Handler failed." }, { status: 500 });
   }
 }

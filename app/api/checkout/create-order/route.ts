@@ -1,16 +1,28 @@
+import { eq, inArray } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
-import { checkoutSchema, priceCart } from "@/lib/checkout";
-import { createOrder, getVariantsForSlugs } from "@/lib/db/queries";
-import {
-  RAZORPAY_CURRENCY,
-  razorpay,
-  toPaise,
-} from "@/lib/razorpay/client";
+import { checkoutSchema } from "@/lib/checkout";
+import { shippingFor } from "@/lib/data/policies";
+import { db } from "@/lib/db";
+import { orderItems, orders, products, variants } from "@/lib/db/schema";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
+import { RAZORPAY_CURRENCY, razorpay, toPaise } from "@/lib/razorpay/client";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
+  const limit = rateLimit(clientIp(request), {
+    key: "create-order",
+    max: 10,
+    windowMs: 10 * 60 * 1000,
+  });
+  if (limit.limited) {
+    return NextResponse.json(
+      { error: "Too many attempts. Try again shortly." },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfterSec) } },
+    );
+  }
+
   let body: unknown;
   try {
     body = await request.json();
@@ -29,70 +41,112 @@ export async function POST(request: Request) {
     );
   }
 
-  const { email, phone, address, items } = parsed.data;
-
-  // Prices come from our catalogue, never from the request body.
-  const { lines, subtotalInr, shippingInr, totalInr } = priceCart(items);
-  if (lines.length === 0 || totalInr <= 0) {
-    return NextResponse.json({ error: "Cart is empty." }, { status: 400 });
-  }
+  const { contact, address, items } = parsed.data;
 
   try {
-    // Resolve variants and confirm there is stock before taking money.
-    const variants = await getVariantsForSlugs(lines.map((l) => l.slug));
-    const key = (slug: string, size: string) => `${slug}:${size}`;
-    const bySku = new Map(
-      variants.map((v) => [key(v.productSlug, v.size), v] as const),
-    );
+    // Prices and stock come from the database. Nothing the browser sent about
+    // money is read.
+    const slugs = [...new Set(items.map((i) => i.slug))];
+    const rows = await db
+      .select({
+        variantId: variants.id,
+        stock: variants.stock,
+        priceInr: products.priceInr,
+        productSlug: products.slug,
+        size: variants.size,
+        active: products.active,
+      })
+      .from(variants)
+      .innerJoin(products, eq(variants.productId, products.id))
+      .where(inArray(products.slug, slugs));
 
-    const orderItems = [];
-    for (const line of lines) {
-      const variant = bySku.get(key(line.slug, line.size));
-      if (!variant) {
+    const key = (slug: string, size: string) => `${slug}:${size}`;
+    const byVariant = new Map(rows.map((r) => [key(r.productSlug, r.size), r]));
+
+    const priced: {
+      variantId: number;
+      productSlug: string;
+      size: string;
+      qty: number;
+      unitPriceInr: number;
+    }[] = [];
+
+    for (const item of items) {
+      const variant = byVariant.get(key(item.slug, item.size));
+      if (!variant || !variant.active) {
         return NextResponse.json(
-          { error: `${line.slug.toUpperCase()} ${line.size} is not available.` },
+          { error: `${item.slug.toUpperCase()} ${item.size} is not available.` },
           { status: 409 },
         );
       }
-      if (variant.stock < line.qty) {
+      if (variant.stock < item.qty) {
         return NextResponse.json(
-          { error: `${line.slug.toUpperCase()} ${line.size} is out of stock.` },
+          {
+            error: `${item.slug.toUpperCase()} ${item.size}: only ${variant.stock} left.`,
+          },
           { status: 409 },
         );
       }
-      orderItems.push({
+      priced.push({
         variantId: variant.variantId,
-        productSlug: line.slug,
-        size: line.size,
-        qty: line.qty,
-        unitPriceInr: line.unitPriceInr,
+        productSlug: item.slug,
+        size: item.size,
+        qty: item.qty,
+        unitPriceInr: variant.priceInr,
       });
     }
+
+    const subtotalInr = priced.reduce(
+      (sum, l) => sum + l.unitPriceInr * l.qty,
+      0,
+    );
+    const shippingInr = shippingFor(subtotalInr);
+    const totalInr = subtotalInr + shippingInr;
+
+    // Our row first, so the Razorpay receipt can carry our id.
+    const [order] = await db
+      .insert(orders)
+      .values({
+        status: "created",
+        email: contact.email,
+        phone: contact.phone,
+        addressJson: address,
+        subtotalInr,
+        shippingInr,
+        totalInr,
+      })
+      .returning();
 
     const rzpOrder = await razorpay().orders.create({
       amount: toPaise(totalInr),
       currency: RAZORPAY_CURRENCY,
-      receipt: `zuary_${Date.now()}`,
-      notes: { email, phone },
+      receipt: order.id,
+      notes: { ourOrderId: order.id, email: contact.email },
     });
 
-    const order = await createOrder({
-      email,
-      phone,
-      address,
-      subtotalInr,
-      shippingInr,
-      totalInr,
-      razorpayOrderId: rzpOrder.id,
-      items: orderItems,
-    });
+    await db
+      .update(orders)
+      .set({ razorpayOrderId: rzpOrder.id, updatedAt: new Date() })
+      .where(eq(orders.id, order.id));
+
+    await db.insert(orderItems).values(
+      priced.map((line) => ({
+        orderId: order.id,
+        variantId: line.variantId,
+        productSlug: line.productSlug,
+        size: line.size,
+        qty: line.qty,
+        unitPriceInr: line.unitPriceInr,
+      })),
+    );
 
     return NextResponse.json({
-      orderId: order.id,
+      ourOrderId: order.id,
       razorpayOrderId: rzpOrder.id,
       amount: rzpOrder.amount,
       currency: rzpOrder.currency,
-      keyId: process.env.RAZORPAY_KEY_ID,
+      // Publishable id only. The secret never leaves the server.
+      keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? process.env.RAZORPAY_KEY_ID,
     });
   } catch (error) {
     console.error("[checkout/create-order]", error);
