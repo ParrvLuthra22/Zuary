@@ -53,7 +53,10 @@ export function productSchema(product: Product, stock: Record<string, number> | 
       price: product.price,
       priceCurrency: "INR",
       availability:
-        anyInStock === null
+        // A trouser we have not shot yet is never in stock, whatever a stale
+        // variant row says. Claiming InStock for something with no buy button
+        // is exactly the mismatch that earns a structured-data penalty.
+        product.status === "coming-soon" || anyInStock === null
           ? "https://schema.org/PreOrder"
           : anyInStock
             ? "https://schema.org/InStock"

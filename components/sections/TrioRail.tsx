@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { TriangleA } from "@/components/layout/Wordmark";
 import { RevealText } from "@/components/motion/RevealText";
 import type { Product } from "@/lib/data/products";
 import { cn, formatINR } from "@/lib/utils";
+import { useNotifyStore } from "@/stores/notify";
 import { useUIStore } from "@/stores/ui";
 
 /**
@@ -191,6 +193,64 @@ export function TrioRail({ products }: { products: Product[] }) {
 }
 
 function Panel({ product }: { product: Product }) {
+  if (product.status === "coming-soon") {
+    return <ComingSoonPanel product={product} />;
+  }
+  return <PhotoPanel product={product} />;
+}
+
+/**
+ * The ComingSoonCard treatment at panel scale: same dashed frame, same
+ * triangle, same hover to solid accent, but sized to the rail and opening the
+ * notify drawer instead of navigating to a PDP with no gallery.
+ */
+function ComingSoonPanel({ product }: { product: Product }) {
+  const open = useNotifyStore((s) => s.open);
+
+  return (
+    <button
+      type="button"
+      onClick={() => open(product)}
+      aria-label={`${product.name} is coming soon — get notified`}
+      className={cn(
+        "group relative block h-full w-full overflow-hidden rounded-sm text-left",
+        "border border-dashed border-line bg-bg-raised",
+        "transition-colors duration-[320ms] ease-[--ease-out]",
+        "group-hover:border-solid hover:border-solid hover:border-accent",
+      )}
+    >
+      <span className="absolute inset-x-0 top-0 bottom-1/3 flex items-center justify-center">
+        <span
+          style={{ fontSize: "48px" }}
+          className="opacity-40 transition-opacity duration-[320ms] ease-[--ease-out] group-hover:opacity-70"
+        >
+          <TriangleA />
+        </span>
+      </span>
+
+      <div
+        data-panel-copy
+        className="absolute inset-x-0 bottom-0 p-6 transition-[transform,opacity] duration-[--dur-mid] ease-[--ease-out] md:p-8"
+      >
+        <p className="t-label text-fg-muted">
+          ZUARY {String(product.series).padStart(2, "0")}
+        </p>
+
+        <div className="mt-2 flex flex-wrap items-baseline gap-3">
+          <h3 className="t-display-md text-fg">{product.name}</h3>
+          <span className="t-deva text-lg text-fg-muted">{product.deva}</span>
+        </div>
+
+        <div className="mt-3 flex items-center justify-between">
+          <span className="t-label text-accent-ink">Coming soon</span>
+          <span className="t-label text-accent-ink">Notify me →</span>
+        </div>
+      </div>
+    </button>
+  );
+}
+
+function PhotoPanel({ product }: { product: Product }) {
   const [failed, setFailed] = useState(false);
 
   return (

@@ -50,7 +50,9 @@ export default async function DropPage({ params }: Params) {
       <ChapterTitle drop={drop} />
       <ChapterManifesto />
       <ChapterProducts products={products} />
-      <ChapterLookbook images={drop.lookbookImages} />
+      {drop.hasLookbook ? (
+        <ChapterLookbook images={drop.lookbookImages} />
+      ) : null}
       <ChapterMaterial />
       <ChapterClose />
     </>

@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
+import ReactDOM from "react-dom";
 import { Suspense } from "react";
 
 import { NewsletterForm } from "@/components/commerce/NewsletterForm";
 import { ShopBrowser } from "@/components/commerce/ShopBrowser";
 import { RevealText } from "@/components/motion/RevealText";
 import { Marquee } from "@/components/sections/Marquee";
-import { PRODUCTS } from "@/lib/data/products";
+import { PRODUCTS, availableProducts } from "@/lib/data/products";
 import { pageMetadata } from "@/lib/site";
 
 export const metadata: Metadata = pageMetadata({
@@ -14,7 +15,38 @@ export const metadata: Metadata = pageMetadata({
   path: "/shop",
 });
 
+/* Kept in step with ProductCard's own sizes attribute. */
+const CARD_SIZES = "(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw";
+/* next.config sets no custom deviceSizes, so these are Next's defaults. */
+const DEVICE_WIDTHS = [640, 750, 828, 1080, 1200, 1920, 2048, 3840];
+
+const optimized = (src: string, width: number) =>
+  `/_next/image?url=${encodeURIComponent(src)}&w=${width}&q=75`;
+
 export default function ShopPage() {
+  /*
+   * ShopBrowser reads search params, so Next renders the whole grid on the
+   * client and the Suspense fallback is all that reaches the HTML. That means
+   * ProductCard's `priority` never emits its preload, and the browser does not
+   * discover the first card's image until hydration — measured as 4.2s of LCP
+   * load delay on mobile, which is most of the metric.
+   *
+   * This page IS server-rendered, so the preload goes here instead. Same URL
+   * and srcset the client will ask for, so it is a cache hit rather than a
+   * second download.
+   */
+  const lcp = availableProducts()[0]?.images[0];
+  if (lcp) {
+    ReactDOM.preload(optimized(lcp, 1080), {
+      as: "image",
+      fetchPriority: "high",
+      imageSrcSet: DEVICE_WIDTHS.map(
+        (w) => `${optimized(lcp, w)} ${w}w`,
+      ).join(", "),
+      imageSizes: CARD_SIZES,
+    });
+  }
+
   return (
     <div className="pb-24">
       <header className="px-6 pt-8 pb-12 md:px-12">

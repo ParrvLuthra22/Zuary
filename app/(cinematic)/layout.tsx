@@ -1,4 +1,5 @@
 import { CartSheet } from "@/components/commerce/CartSheet";
+import { NotifyDrawer } from "@/components/commerce/NotifyDrawer";
 import { Footer } from "@/components/layout/Footer";
 import { Nav } from "@/components/layout/Nav";
 
@@ -21,6 +22,7 @@ export default function CinematicLayout({
       <div className="bg-bg-deep">{children}</div>
       <Footer />
       <CartSheet />
+      <NotifyDrawer />
     </>
   );
 }

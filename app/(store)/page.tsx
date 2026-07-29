@@ -8,12 +8,26 @@ import { SpecsTable } from "@/components/sections/SpecsTable";
 import { TrioRail } from "@/components/sections/TrioRail";
 import { WaitlistSection } from "@/components/sections/WaitlistSection";
 import { currentDrop } from "@/lib/data/drops";
-import { PRODUCTS, getProduct } from "@/lib/data/products";
+import {
+  PRODUCTS,
+  availableProducts,
+  comingSoonProducts,
+  getProduct,
+} from "@/lib/data/products";
 
 import { JsonLd, organizationSchema } from "@/lib/schema";
 import { SITE_DESCRIPTION, pageMetadata } from "@/lib/site";
 
-const kohl = getProduct("kohl");
+const reeh = getProduct("reeh");
+
+/**
+ * Full length → detail → full length. Cross-dissolving straight down 01…06
+ * runs two wides then four macros and the back half stops reading as the same
+ * garment; this order keeps returning to the silhouette.
+ */
+const HERO_FRAMES = [0, 1, 5, 3, 4, 2]
+  .map((i) => reeh?.images[i])
+  .filter((src): src is string => Boolean(src));
 
 export const metadata: Metadata = pageMetadata({
   title: "ZUARY — Cut sharp.",
@@ -27,31 +41,34 @@ export default function HomePage() {
     <>
       <JsonLd data={organizationSchema()} />
 
-      {/* 1 — /public/sequence/hero is empty, so the hero cross-dissolves the
-          KOHL frames. Switch to mode="sequence" once the shoot lands.
+      {/* 1 — /public/sequence/hero is empty, so there is no rotation to scrub.
+          The hero cross-dissolves the REEH frames instead; switch to
+          mode="sequence" once a turntable is shot. productSlug drives the spec
+          rail, outro name, price and CTA, so the copy moves with the imagery
+          rather than describing a different trouser. */}
+      <HeroScrub
+        mode="crossfade"
+        fallbackImages={HERO_FRAMES}
+        productSlug="reeh"
+      />
 
-          KOHL has not been shot, so right now this renders with no imagery at
-          all. REEH is the only set we have, but the hero's spec lines, outro
-          name, price and CTA are all KOHL — pointing the images at REEH
-          without moving that copy would show sand cotton-linen under "280 GSM
-          COTTON TWILL". Move both together or neither. */}
-      <HeroScrub mode="crossfade" fallbackImages={kohl?.images ?? []} />
-
-      {/* 2 */}
+      {/* 2 — 240 GSM, not 280: the hero is REEH now and the marquee sits
+          directly under it. */}
       <Marquee
         variant="outline"
         speed={40}
         items={[
           "ENGINEERED FIT",
-          "280 GSM",
+          "240 GSM",
           "MADE IN INDIA",
           "FREE SHIPPING OVER ₹2000",
           "CUT SHARP",
         ]}
       />
 
-      {/* 3 */}
-      <TrioRail products={PRODUCTS} />
+      {/* 3 — shot first, unshot after: the rail should open on the trouser
+          that has photography, not on a dashed placeholder. */}
+      <TrioRail products={[...availableProducts(), ...comingSoonProducts()]} />
 
       {/* 4 */}
       <MaterialScroll />

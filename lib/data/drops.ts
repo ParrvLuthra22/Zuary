@@ -24,6 +24,12 @@ export type Drop = {
   intro: string;
   products: ProductSlug[];
   lookbookImages: LookbookImage[];
+  /**
+   * False until the lookbook has actually been shot. The captions and layout
+   * below are already written, but the files are not there — so consumers
+   * skip the lookbook rather than requesting ten frames that 404.
+   */
+  hasLookbook: boolean;
 };
 
 export const DROPS: Drop[] = [
@@ -50,6 +56,7 @@ export const DROPS: Drop[] = [
       { src: "/lookbook/the-trouser-trio/09.webp", span: "half", caption: "Black that fades at the seam.", product: "kohl" },
       { src: "/lookbook/the-trouser-trio/10.webp", span: "half", caption: "Three cuts, one block.", product: "kohl" },
     ],
+    hasLookbook: false,
   },
 ];
 

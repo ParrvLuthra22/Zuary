@@ -84,6 +84,12 @@ export const waitlist = pgTable("waitlist", {
   id: serial("id").primaryKey(),
   email: text("email").notNull(),
   source: text("source").notNull().default("site"),
+  /* Both nullable: the footer and shop forms are drop-wide and carry neither.
+     Only the per-product notify drawer fills them in, and size is optional
+     even there — we would rather have the email than lose it to a required
+     field nobody wants to answer. */
+  productSlug: text("product_slug"),
+  size: text("size"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

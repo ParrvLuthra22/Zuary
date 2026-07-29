@@ -8,6 +8,10 @@ export const runtime = "nodejs";
 const schema = z.object({
   email: z.string().email("That email does not look right."),
   source: z.string().max(64).default("site"),
+  /* The notify drawer sends these; every other form omits them. Size is
+     optional in the drawer too, so an empty string has to pass. */
+  product: z.enum(["kohl", "dhool", "reeh"]).optional(),
+  size: z.enum(["S", "M", "L", "XL"]).optional(),
 });
 
 const WINDOW_MS = 10 * 60 * 1000;
@@ -74,6 +78,7 @@ export async function POST(request: Request) {
     await addToWaitlist(
       parsed.data.email.toLowerCase().trim(),
       parsed.data.source,
+      { productSlug: parsed.data.product, size: parsed.data.size },
     );
     return NextResponse.json({ ok: true });
   } catch (error) {

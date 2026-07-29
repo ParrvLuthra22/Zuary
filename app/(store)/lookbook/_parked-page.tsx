@@ -1,3 +1,21 @@
+/**
+ * PARKED — this is the lookbook page, intact, one rename away from live.
+ *
+ * /public/lookbook/the-trouser-trio is empty, so shipping this rendered ten
+ * broken frames. It is filed as `_parked-page.tsx` rather than `page.tsx` so
+ * Next does not route it: /lookbook now hits the app's not-found boundary and
+ * answers a real 404. Calling notFound() from a prerendered page.tsx instead
+ * gives a *soft* 404 — the 404 body served with a 200 — which is precisely
+ * what the dynamicParams comments elsewhere in this app exist to prevent.
+ *
+ * To bring it back when the shoot lands:
+ *   1. rename this file to page.tsx
+ *   2. put { href: "/lookbook", label: "LOOKBOOK" } back in NAV_LINKS
+ *   3. put /lookbook back in app/sitemap.ts
+ *   4. set hasLookbook: true on the drop in lib/data/drops.ts
+ *
+ * StickyStack and LookbookGrid were never touched.
+ */
 import type { Metadata } from "next";
 
 import { ProductCard } from "@/components/commerce/ProductCard";

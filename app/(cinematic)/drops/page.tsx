@@ -41,7 +41,13 @@ export default function DropsPage() {
             style={{ backgroundColor: "#2A2E31" }}
           >
             <Image
-              src={currentDrop.lookbookImages[0].src}
+              // The lookbook has not been shot, so the masked reveal borrows
+              // the one full-length frame that exists.
+              src={
+                currentDrop.hasLookbook
+                  ? currentDrop.lookbookImages[0].src
+                  : "/products/reeh/01.webp"
+              }
               alt={currentDrop.title}
               fill
               sizes="100vw"

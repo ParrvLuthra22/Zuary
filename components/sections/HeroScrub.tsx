@@ -5,7 +5,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { TriangleA } from "@/components/layout/Wordmark";
 import { Button } from "@/components/ui/button";
-import { getProduct } from "@/lib/data/products";
+import {
+  getProduct,
+  type Product,
+  type ProductSlug,
+} from "@/lib/data/products";
 import { formatINR } from "@/lib/utils";
 import { useUIStore } from "@/stores/ui";
 
@@ -16,16 +20,22 @@ export type HeroScrubProps = {
   /** Stacked and cross-dissolved when mode is 'crossfade'. [0] is the static
    *  frame used on mobile and under reduced motion in both modes. */
   fallbackImages?: string[];
+  /**
+   * The trouser the hero is selling. Its slug drives the spec lines, the
+   * outro name, the price and the CTA — pass the same one the imagery shows
+   * or the hero will describe a garment it is not displaying.
+   */
+  productSlug?: ProductSlug;
 };
 
-const SPEC_LINES = [
-  "280 GSM COTTON TWILL",
-  "MILL-WOVEN, TIRUPUR",
+const READY_AT = 0.8;
+
+/** Mill reads "Bhilwara, Rajasthan"; the rail only has room for the town. */
+const specLinesFor = (product: Product | undefined) => [
+  `${product?.weight ?? "280 GSM"} ${(product?.fabric ?? "cotton twill").toUpperCase()}`,
+  `MILL-WOVEN, ${(product?.mill ?? "Tirupur").split(",")[0].toUpperCase()}`,
   "FOUR SIZES, ONE CUT",
 ];
-
-const READY_AT = 0.8;
-const KOHL = getProduct("kohl");
 
 const clamp01 = (n: number) => (n < 0 ? 0 : n > 1 ? 1 : n);
 /** 0 before `from`, 1 after `to`, linear between. */
@@ -46,8 +56,11 @@ export function HeroScrub({
   frames = 48,
   basePath = "/sequence/hero",
   fallbackImages = [],
+  productSlug = "kohl",
 }: HeroScrubProps) {
   const reducedMotion = useUIStore((s) => s.reducedMotion);
+  const product = getProduct(productSlug);
+  const specLines = specLinesFor(product);
 
   // Null until measured. Rendering the static hero first means a phone never
   // starts the sequence download, even for a frame.
@@ -340,7 +353,7 @@ export function HeroScrub({
             RY
           </p>
           <p className="t-label text-fg-muted">Engineered fit</p>
-          <HeroCta />
+          <HeroCta product={product} />
         </div>
       </section>
     );
@@ -354,7 +367,7 @@ export function HeroScrub({
 
       <section
         ref={sectionRef}
-        aria-label="KOHL — engineered fit"
+        aria-label={`${product?.name ?? "ZUARY"} — engineered fit`}
         className="relative h-screen w-full overflow-hidden bg-bg-deep"
       >
         {!ready ? <Loader loaded={loaded} total={frames} /> : null}
@@ -413,7 +426,7 @@ export function HeroScrub({
             ref={specRef}
             className="absolute inset-y-0 right-12 flex flex-col justify-center gap-5 md:right-20"
           >
-            {SPEC_LINES.map((line) => (
+            {specLines.map((line) => (
               <li
                 key={line}
                 className="flex items-center justify-end gap-4"
@@ -430,11 +443,11 @@ export function HeroScrub({
             className="absolute inset-0 flex flex-col items-center justify-center gap-5"
             style={{ opacity: 0 }}
           >
-            <p className="t-display-lg text-fg">KOHL</p>
+            <p className="t-display-lg text-fg">{product?.name}</p>
             <p className="font-mono text-sm text-fg-muted">
-              {KOHL ? formatINR(KOHL.price) : null}
+              {product ? formatINR(product.price) : null}
             </p>
-            <HeroCta />
+            <HeroCta product={product} />
           </div>
 
           {/* Scroll rail */}
@@ -454,13 +467,14 @@ export function HeroScrub({
   );
 }
 
-function HeroCta() {
+function HeroCta({ product }: { product: Product | undefined }) {
+  if (!product) return null;
   return (
     <Button
       asChild
       className="h-12 rounded-sm bg-accent px-8 font-mono text-xs tracking-[0.18em] text-carbon uppercase hover:bg-accent-soft"
     >
-      <Link href="/products/kohl">View KOHL</Link>
+      <Link href={`/products/${product.slug}`}>View {product.name}</Link>
     </Button>
   );
 }

@@ -66,7 +66,9 @@ export function ChapterMaterial() {
       >
         {!failed ? (
           <Image
-            src="/material/weave.webp"
+            // No separate material shoot: the pleat macro is the closest thing
+            // we have to a full-bleed cloth surface.
+            src="/products/reeh/04.webp"
             alt=""
             aria-hidden
             fill
@@ -78,8 +80,10 @@ export function ChapterMaterial() {
         ) : null}
       </div>
 
+      {/* 240, not 280: the plate behind this is REEH's cotton-linen, not the
+          twill. The number has to match the cloth on screen. */}
       <p className="t-display-xl relative z-10 text-off-white mix-blend-difference">
-        280 GSM.
+        240 GSM.
       </p>
     </section>
   );

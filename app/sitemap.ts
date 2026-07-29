@@ -11,7 +11,8 @@ const STATIC_ROUTES: { path: string; priority: number; freq: MetadataRoute.Sitem
   { path: "/shop", priority: 0.9, freq: "weekly" },
   { path: "/products", priority: 0.8, freq: "weekly" },
   { path: "/drops", priority: 0.8, freq: "weekly" },
-  { path: "/lookbook", priority: 0.7, freq: "monthly" },
+  /* /lookbook is parked until there is lookbook photography — see
+     app/(store)/lookbook/_parked-page.tsx. Restore this entry with the route. */
   { path: "/about", priority: 0.6, freq: "monthly" },
 ];
 

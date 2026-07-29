@@ -3,13 +3,20 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { BuyBox } from "@/components/commerce/BuyBox";
+import { ComingSoonCard } from "@/components/commerce/ComingSoonCard";
+import { NotifyButton } from "@/components/commerce/NotifyButton";
 import { ProductCard } from "@/components/commerce/ProductCard";
 import { ProductGallery } from "@/components/commerce/ProductGallery";
 import { TriangleA } from "@/components/layout/Wordmark";
 import { getVariantStock } from "@/lib/db/queries";
 import { JsonLd, productSchema } from "@/lib/schema";
 import { pageMetadata } from "@/lib/site";
-import { PRODUCTS, getProduct, type Product } from "@/lib/data/products";
+import {
+  PRODUCTS,
+  availableProducts,
+  getProduct,
+  type Product,
+} from "@/lib/data/products";
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -44,6 +51,12 @@ export default async function ProductPage({ params }: Params) {
   const product = getProduct(slug);
   if (!product) notFound();
 
+  // Real garment, no photography — so the page publishes what we know rather
+  // than dressing an empty gallery up as a product.
+  if (product.status === "coming-soon") {
+    return <InProduction product={product} />;
+  }
+
   // Null when there is no database yet; the buy box treats that as "unknown"
   // rather than sold out, so the page still works without one.
   const stock = await getVariantStock(slug);
@@ -74,7 +87,11 @@ export default async function ProductPage({ params }: Params) {
         <ul className="mt-12 grid grid-cols-1 gap-x-6 gap-y-16 sm:grid-cols-2 lg:grid-cols-3">
           {others.map((other) => (
             <li key={other.slug}>
-              <ProductCard product={other} />
+              {other.status === "available" ? (
+                <ProductCard product={other} />
+              ) : (
+                <ComingSoonCard product={other} />
+              )}
             </li>
           ))}
           <li>
@@ -94,6 +111,71 @@ export default async function ProductPage({ params }: Params) {
   );
 }
 
+/**
+ * The coming-soon PDP. No gallery, no buy box, no invented imagery — a
+ * statement that the garment exists, the specs we can already stand behind,
+ * and one way to be told when it lands.
+ */
+function InProduction({ product }: { product: Product }) {
+  const specs = [
+    { label: "Fabric", value: product.fabric },
+    { label: "Weight", value: product.weight },
+    { label: "Mill", value: product.mill },
+    { label: "Fit", value: product.fit },
+  ];
+
+  const available = availableProducts();
+
+  return (
+    <div className="pb-32">
+      <JsonLd data={productSchema(product, null)} />
+
+      <section className="flex min-h-[70vh] flex-col items-center justify-center px-6 py-24 text-center">
+        <span style={{ fontSize: "64px" }}>
+          <TriangleA />
+        </span>
+
+        <h1 className="t-display-lg mt-10">{product.name}</h1>
+        <p className="t-deva mt-3 text-xl text-fg-muted">{product.deva}</p>
+
+        <p className="mt-8 text-lg text-fg-muted">
+          In production. Landing Q4 2026.
+        </p>
+
+        <dl className="mt-14 grid w-full max-w-2xl grid-cols-2 gap-x-8 gap-y-8 border-y border-line py-10 text-left sm:grid-cols-4">
+          {specs.map((spec) => (
+            <div key={spec.label}>
+              <dt className="t-label text-fg-muted">{spec.label}</dt>
+              <dd className="mt-2 text-sm text-fg capitalize">{spec.value}</dd>
+            </div>
+          ))}
+        </dl>
+
+        <NotifyButton product={product} className="mt-12" />
+      </section>
+
+      {available.length > 0 ? (
+        <section className="border-t border-line px-6 py-24 md:px-12">
+          <p className="t-label text-accent-ink">Available now</p>
+          <h2 className="t-display-md mt-3">
+            {available.length === 1
+              ? "One cut you can buy today."
+              : "Cuts you can buy today."}
+          </h2>
+
+          <ul className="mt-12 grid grid-cols-1 gap-x-6 gap-y-16 sm:grid-cols-2 lg:grid-cols-3">
+            {available.map((other) => (
+              <li key={other.slug}>
+                <ProductCard product={other} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+    </div>
+  );
+}
+
 function FabricBand({ product }: { product: Product }) {
   const specs = [
     { label: "Weight", value: product.weight },
@@ -104,17 +186,28 @@ function FabricBand({ product }: { product: Product }) {
 
   return (
     <section className="grid gap-10 border-t border-line md:grid-cols-2 md:gap-0">
+      {/* No mill photography exists, so the band uses the closest cloth macro
+          from the product's own set. Falls back to the swatch for anything not
+          yet shot — which cannot currently happen, since an unshot trouser
+          never reaches this layout. */}
       <div
         className="relative aspect-[4/3] w-full overflow-hidden bg-bg-raised md:aspect-auto md:min-h-[36rem]"
+        style={
+          product.hasPhotography
+            ? undefined
+            : { backgroundColor: product.swatch }
+        }
         aria-hidden
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/material/mill.webp"
-          alt=""
-          loading="lazy"
-          className="absolute inset-0 h-full w-full object-cover"
-        />
+        {product.images[4] ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={product.images[4]}
+            alt=""
+            loading="lazy"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        ) : null}
       </div>
 
       <div className="px-6 pb-16 md:px-12 md:py-24">

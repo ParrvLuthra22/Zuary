@@ -5,6 +5,7 @@ import { SlidersHorizontal } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo } from "react";
 
+import { ComingSoonCard } from "@/components/commerce/ComingSoonCard";
 import { ProductCard } from "@/components/commerce/ProductCard";
 import { TriangleA } from "@/components/layout/Wordmark";
 import { ButtonZ } from "@/components/ui/button-z";
@@ -76,20 +77,42 @@ export function ShopBrowser({ products }: { products: Product[] }) {
     [commit],
   );
 
-  const visible = useMemo(() => {
-    let list = products.filter((p) => {
+  const { available, comingSoon, visible } = useMemo(() => {
+    const matches = (p: Product) => {
       const cutOk = cuts.length === 0 || cuts.includes(p.fit as Cut);
+      // A coming-soon trouser has no stock to filter against — the sizes on
+      // it are the intended run, not availability. Excluding it from a size
+      // filter would hide a cut that will exist in that size.
       const sizeOk =
-        sizes.length === 0 || sizes.some((s) => p.sizes.includes(s));
+        p.status === "coming-soon" ||
+        sizes.length === 0 ||
+        sizes.some((s) => p.sizes.includes(s));
       return cutOk && sizeOk;
-    });
+    };
 
-    list = [...list];
-    if (sort === "price-asc") list.sort((a, b) => a.price - b.price);
-    else if (sort === "price-desc") list.sort((a, b) => b.price - a.price);
-    else list.sort((a, b) => a.series - b.series);
+    const order = (list: Product[]) => {
+      const next = [...list];
+      if (sort === "price-asc") next.sort((a, b) => a.price - b.price);
+      else if (sort === "price-desc") next.sort((a, b) => b.price - a.price);
+      else next.sort((a, b) => a.series - b.series);
+      return next;
+    };
 
-    return list;
+    const matched = products.filter(matches);
+    // Shot trousers lead regardless of sort — a buyable card should never sit
+    // below one that cannot be bought.
+    const availableList = order(
+      matched.filter((p) => p.status === "available"),
+    );
+    const comingSoonList = order(
+      matched.filter((p) => p.status === "coming-soon"),
+    );
+
+    return {
+      available: availableList,
+      comingSoon: comingSoonList,
+      visible: [...availableList, ...comingSoonList],
+    };
   }, [products, cuts, sizes, sort]);
 
   const hasFilters = cuts.length > 0 || sizes.length > 0 || sort !== "new";
@@ -196,7 +219,10 @@ export function ShopBrowser({ products }: { products: Product[] }) {
           </div>
 
           <p className="t-label shrink-0 text-fg-muted">
-            {visible.length} {visible.length === 1 ? "Trouser" : "Trousers"}
+            {available.length} available
+            {comingSoon.length > 0 ? (
+              <> · {comingSoon.length} coming soon</>
+            ) : null}
           </p>
         </div>
       </div>
@@ -228,7 +254,11 @@ export function ShopBrowser({ products }: { products: Product[] }) {
                   delay: i * 0.08,
                 }}
               >
-                <ProductCard product={product} priority={i === 0} />
+                {product.status === "available" ? (
+                  <ProductCard product={product} priority={i === 0} />
+                ) : (
+                  <ComingSoonCard product={product} />
+                )}
               </motion.li>
             ))}
           </AnimatePresence>

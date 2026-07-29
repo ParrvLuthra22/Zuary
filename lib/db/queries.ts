@@ -298,10 +298,20 @@ export async function decrementStockForOrder(orderId: string) {
 
 /* ── Waitlist ──────────────────────────────────────────────── */
 
-export async function addToWaitlist(email: string, source: string) {
+export async function addToWaitlist(
+  email: string,
+  source: string,
+  /** Set only by the per-product notify drawer; both stay null elsewhere. */
+  details: { productSlug?: string; size?: string } = {},
+) {
   const [row] = await db
     .insert(waitlist)
-    .values({ email, source })
+    .values({
+      email,
+      source,
+      productSlug: details.productSlug ?? null,
+      size: details.size ?? null,
+    })
     .returning();
   return row;
 }

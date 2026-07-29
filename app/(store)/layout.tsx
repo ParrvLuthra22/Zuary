@@ -1,4 +1,5 @@
 import { CartSheet } from "@/components/commerce/CartSheet";
+import { NotifyDrawer } from "@/components/commerce/NotifyDrawer";
 import { Footer } from "@/components/layout/Footer";
 import { Nav } from "@/components/layout/Nav";
 
@@ -17,6 +18,7 @@ export default function StoreLayout({
       <div className="min-h-screen pt-24 md:pt-28">{children}</div>
       <Footer />
       <CartSheet />
+      <NotifyDrawer />
     </>
   );
 }

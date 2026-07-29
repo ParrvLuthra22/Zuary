@@ -23,10 +23,12 @@ import { cn, formatINR } from "@/lib/utils";
 import { useCartCount } from "@/stores/cart";
 import { useUIStore } from "@/stores/ui";
 
+/* LOOKBOOK is parked until there is lookbook photography — the route 404s, so
+   linking to it would be a dead entry in the primary nav. Put it back between
+   DROP and ABOUT when the shoot lands. */
 const LINKS = [
   { href: "/shop", label: "SHOP" },
   { href: "/drops", label: "DROP" },
-  { href: "/lookbook", label: "LOOKBOOK" },
   { href: "/about", label: "ABOUT" },
 ];
 

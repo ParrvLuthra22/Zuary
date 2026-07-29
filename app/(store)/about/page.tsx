@@ -94,21 +94,14 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* full-bleed breakout */}
-      <figure className="my-20 w-full">
-        <div className="relative aspect-[21/9] w-full overflow-hidden bg-bg-raised">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/material/mill.webp"
-            alt="The mill floor in Tirupur"
-            loading="lazy"
-            className="absolute inset-0 h-full w-full object-cover"
-          />
-        </div>
-        <figcaption className="t-label mt-3 px-6 text-fg-muted md:px-12">
-          Tirupur, Tamil Nadu — the second of the two mills we shortlisted
-        </figcaption>
-      </figure>
+      {/* Full-bleed breakout — pulled until there is a mill photograph.
+          /material/mill.webp was never shot, so this rendered an empty
+          21:9 band. It is the one image on the site a product macro cannot
+          stand in for: the caption names the mill floor at Tirupur, and
+          captioning a trouser as a factory is the sort of thing this page
+          spends six paragraphs promising we do not do. Restore the figure
+          with the file. */}
+      <div className="my-20" />
 
       <section className="px-6 md:px-12">
         <div className="max-w-2xl">

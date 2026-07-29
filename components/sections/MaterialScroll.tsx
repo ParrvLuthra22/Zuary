@@ -9,14 +9,37 @@ import { useUIStore } from "@/stores/ui";
 type Plate = {
   src: string;
   caption: string;
+  /** Describes the shot; the caption is a one-word label, not alt text. */
+  alt: string;
   /** Desktop placement — alternating sides, each sitting lower than the last. */
   className: string;
 };
 
+/**
+ * There is no separate /material/ shoot, so these are the REEH macros — the
+ * three frames that are already close enough to read as material rather than
+ * as product. Alt text comes from the product's own imageAlts so the two
+ * never drift apart.
+ */
 const PLATES: Plate[] = [
-  { src: "/material/weave.webp", caption: "Weave", className: "md:mr-auto" },
-  { src: "/material/tag.webp", caption: "Tag", className: "md:ml-auto md:mt-24" },
-  { src: "/material/hem.webp", caption: "Hem", className: "md:mr-auto md:mt-24" },
+  {
+    src: "/products/reeh/03.webp",
+    caption: "Tag",
+    alt: "Waistband detail — side-adjuster tab, belt loop and ZUARY triangle label",
+    className: "md:mr-auto",
+  },
+  {
+    src: "/products/reeh/04.webp",
+    caption: "Pleat",
+    alt: "Single forward pleat and slant pocket construction",
+    className: "md:ml-auto md:mt-24",
+  },
+  {
+    src: "/products/reeh/05.webp",
+    caption: "Hem",
+    alt: "Turn-up hem detail",
+    className: "md:mr-auto md:mt-24",
+  },
 ];
 
 /** Colour arrives as a plate's top crosses 60% → 40% of the viewport. */
@@ -115,7 +138,7 @@ function MaterialPlate({
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={plate.src}
-            alt={plate.caption}
+            alt={plate.alt}
             loading="lazy"
             className="h-full w-full object-cover"
             onError={() => setFailed(true)}
