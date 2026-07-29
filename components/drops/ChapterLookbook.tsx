@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import { useState } from "react";
 
+import { BLUR } from "@/lib/data/blur";
 import type { LookbookImage, LookbookSpan } from "@/lib/data/drops";
 import { dur, easeOut } from "@/lib/motion/easing";
 import { cn } from "@/lib/utils";
@@ -23,15 +24,49 @@ const SIZES: Record<LookbookSpan, string> = {
 
 export function ChapterLookbook({ images }: { images: LookbookImage[] }) {
   return (
-    <section className="border-t border-line px-6 py-24 md:px-12">
-      <p className="t-label text-accent-ink">Lookbook</p>
-      <h2 className="t-display-md mt-3">Shot on location.</h2>
+    <section className="border-t border-line py-24">
+      {/* The chapter opens on the twelve-colourway grid. Its caption states the
+          ratio outright: this is the range, not the assortment, and only three
+          of the twelve in the shot are trousers you can buy. */}
+      <figure className="w-full">
+        <motion.div
+          initial={{ clipPath: "inset(100% 0% 0% 0%)" }}
+          whileInView={{ clipPath: "inset(0% 0% 0% 0%)" }}
+          viewport={{ once: true, margin: "-10% 0px -10% 0px" }}
+          transition={{ duration: dur.slow, ease: [...easeOut] }}
+          className="relative aspect-[4/3] w-full overflow-hidden bg-bg md:aspect-[16/9]"
+        >
+          <Image
+            src="/lookbook/grid.webp"
+            alt="Twelve folded trousers in twelve colourways, arranged three by four and shot from overhead. Three of the twelve are in production; the rest are development samples."
+            fill
+            loading="lazy"
+            sizes="100vw"
+            placeholder="blur"
+            blurDataURL={BLUR["lookbook-grid"]}
+            className="object-cover"
+          />
+        </motion.div>
+        <figcaption className="t-label mt-3 px-6 text-fg-muted md:px-12">
+          Drop 01 — three of twelve
+        </figcaption>
+      </figure>
 
-      <div className="mt-12 grid grid-cols-1 gap-2 md:grid-cols-12">
-        {images.map((image, i) => (
-          <Plate key={image.src} image={image} priority={i === 0} />
-        ))}
-      </div>
+      {/* The location shoot still has not happened, so this half stays out
+          rather than printing a heading over an empty grid. Set hasLookbook on
+          the drop and it returns. */}
+      {images.length > 0 ? (
+        <div className="px-6 md:px-12">
+          <p className="t-label mt-24 text-accent-ink">Lookbook</p>
+          <h2 className="t-display-md mt-3">Shot on location.</h2>
+
+          <div className="mt-12 grid grid-cols-1 gap-2 md:grid-cols-12">
+            {images.map((image, i) => (
+              <Plate key={image.src} image={image} priority={i === 0} />
+            ))}
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

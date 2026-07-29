@@ -218,11 +218,19 @@ export function ShopBrowser({ products }: { products: Product[] }) {
             </div>
           </div>
 
+          {/* With everything shot there is nothing to distinguish, so the
+              count goes back to a plain total. The split only reappears if a
+              future product is still in production. */}
           <p className="t-label shrink-0 text-fg-muted">
-            {available.length} available
-            {comingSoon.length > 0 ? (
-              <> · {comingSoon.length} coming soon</>
-            ) : null}
+            {comingSoon.length === 0 ? (
+              <>
+                {visible.length} {visible.length === 1 ? "Trouser" : "Trousers"}
+              </>
+            ) : (
+              <>
+                {available.length} available · {comingSoon.length} coming soon
+              </>
+            )}
           </p>
         </div>
       </div>

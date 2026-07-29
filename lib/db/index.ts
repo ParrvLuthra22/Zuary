@@ -32,11 +32,24 @@ function create() {
   return drizzle(pool, { schema });
 }
 
+/**
+ * The real Drizzle instance, built on first call.
+ *
+ * Anything that inspects the client itself rather than just calling methods on
+ * it has to go through this instead of `db` below. The Auth.js Drizzle adapter
+ * is the case in point: it picks its dialect with drizzle's `is()`, which walks
+ * the prototype chain, and a Proxy wrapping `{}` fails that check with
+ * "Unsupported database type (object)".
+ */
+export function getDb() {
+  cached ??= create();
+  return cached;
+}
+
 /** Resolved lazily so importing this module without a database does not throw. */
 export const db = new Proxy({} as ReturnType<typeof create>, {
   get(_target, prop, receiver) {
-    cached ??= create();
-    return Reflect.get(cached, prop, receiver);
+    return Reflect.get(getDb(), prop, receiver);
   },
 });
 

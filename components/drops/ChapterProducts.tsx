@@ -8,7 +8,6 @@ import { loadGsap, useCinematic } from "@/components/drops/useCinematic";
 import { ButtonZ } from "@/components/ui/button-z";
 import type { Product } from "@/lib/data/products";
 import { cn, formatINR, seriesLabel } from "@/lib/utils";
-import { useNotifyStore } from "@/stores/notify";
 
 export function ChapterProducts({ products }: { products: Product[] }) {
   const { cinematic } = useCinematic();
@@ -57,15 +56,12 @@ export function ChapterProducts({ products }: { products: Product[] }) {
     };
   }, [cinematic]);
 
-  // Shot garments get a chapter each. The rest share one — three near-identical
-  // empty chapters would read as three things missing rather than as two
-  // things coming.
-  const shot = products.filter((p) => p.status === "available");
-  const unshot = products.filter((p) => p.status === "coming-soon");
-
+  // All three are shot, so every trouser gets its own chapter again. The
+  // combined "Two more cuts." section that stood in while KOHL and DHOOL were
+  // unphotographed is gone.
   return (
     <div ref={rootRef}>
-      {shot.map((product, i) => (
+      {products.map((product, i) => (
         <ProductChapter
           key={product.slug}
           product={product}
@@ -73,70 +69,7 @@ export function ChapterProducts({ products }: { products: Product[] }) {
           cinematic={cinematic}
         />
       ))}
-
-      {unshot.length > 0 ? (
-        <ComingSoonChapter products={unshot} />
-      ) : null}
     </div>
-  );
-}
-
-/** One section for everything still in production, however many that is. */
-function ComingSoonChapter({ products }: { products: Product[] }) {
-  const open = useNotifyStore((s) => s.open);
-
-  return (
-    <section className="border-t border-line px-6 py-28 md:min-h-svh md:px-16 md:py-40">
-      <div className="mx-auto flex h-full max-w-5xl flex-col justify-center">
-        <p className="t-label text-accent-ink">Still on the table</p>
-
-        <h2 className="t-display-lg mt-4">
-          {products.length === 2 ? "Two more cuts." : "More cuts."}
-        </h2>
-
-        <div className="mt-16 grid gap-12 md:grid-cols-2 md:gap-16">
-          {products.map((product) => (
-            <div key={product.slug} className="border-t border-line pt-8">
-              <div className="flex flex-wrap items-baseline gap-3">
-                <h3 className="t-display-md">{product.name}</h3>
-                <span className="t-deva text-lg text-fg-muted">
-                  {product.deva}
-                </span>
-              </div>
-              <p className="t-label mt-2 text-fg-muted">
-                {product.devaMeaning}
-              </p>
-
-              <dl className="mt-8 grid grid-cols-2 gap-x-8 gap-y-5">
-                {[
-                  ["Fit", product.fit],
-                  ["Weight", product.weight],
-                  ["Fabric", product.fabric],
-                  ["Mill", product.mill],
-                ].map(([label, value]) => (
-                  <div key={label}>
-                    <dt className="t-label text-fg-muted">{label}</dt>
-                    <dd className="mt-1 text-sm text-fg capitalize">{value}</dd>
-                  </div>
-                ))}
-              </dl>
-            </div>
-          ))}
-        </div>
-
-        <p className="mt-16 max-w-md text-fg-muted">
-          Both are cut and in production. Neither has been photographed, and we
-          would rather show you nothing than show you something else.
-        </p>
-
-        <ButtonZ
-          className="mt-8 self-start"
-          onClick={() => open(products[0])}
-        >
-          Notify me
-        </ButtonZ>
-      </div>
-    </section>
   );
 }
 

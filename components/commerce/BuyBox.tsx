@@ -165,9 +165,21 @@ export function BuyBox({ product, stock }: BuyBoxProps) {
               </p>
               <p className="mt-4 text-sm text-fg-muted">
                 Cut <span className="text-fg">{product.fit}</span> on the shared
-                block. All three trousers size the same, so a {product.sizes[1]}{" "}
-                here is a {product.sizes[1]} in the others.
+                block, finished with a{" "}
+                <span className="text-fg">
+                  {product.hem === "turn-up" ? "turn-up" : "plain hem"}
+                </span>
+                . All three trousers size the same, so a {product.sizes[1]} here
+                is a {product.sizes[1]} in the others.
               </p>
+              {/* Read off product.hem rather than written out, so the copy
+                  cannot drift from the garment the gallery is showing. */}
+              {product.hem === "turn-up" ? (
+                <p className="mt-3 text-sm text-fg-muted">
+                  The turn-up is stitched, not pressed — it will not drop out in
+                  the wash. Inseam in the size guide is measured to the fold.
+                </p>
+              ) : null}
             </AccordionContent>
           </AccordionItem>
 

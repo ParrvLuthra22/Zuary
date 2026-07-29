@@ -1,9 +1,12 @@
+import { createId } from "@paralleldrive/cuid2";
 import {
   boolean,
+  index,
   integer,
   jsonb,
   pgEnum,
   pgTable,
+  primaryKey,
   serial,
   text,
   timestamp,
@@ -49,6 +52,13 @@ export type ShippingAddress = {
 
 export const orders = pgTable("orders", {
   id: uuid("id").primaryKey().defaultRandom(),
+  /**
+   * Nullable, and it has to stay that way: every order placed before auth
+   * existed has no user to point at, and guest checkout still writes rows with
+   * this unset. New authenticated orders always carry it. Treat null as
+   * "guest", never as "missing data".
+   */
+  userId: text("user_id").references(() => users.id),
   status: orderStatus("status").notNull().default("created"),
   email: text("email").notNull(),
   phone: text("phone").notNull(),
@@ -95,6 +105,179 @@ export const waitlist = pgTable("waitlist", {
     .defaultNow(),
 });
 
+/* ── Auth ───────────────────────────────────────────────────────
+   The users/accounts/sessions/verificationTokens shapes are dictated by
+   @auth/drizzle-adapter, which maps by *property* name. The snake_case
+   properties on `accounts` (refresh_token, expires_at, …) look out of place
+   next to the rest of this file on purpose — rename them to camelCase and the
+   adapter silently stops persisting OAuth tokens. */
+
+export type UserRole = "customer" | "admin";
+
+export const users = pgTable("users", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => createId()),
+  name: text("name"),
+  email: text("email").notNull().unique(),
+  emailVerified: timestamp("email_verified", { withTimezone: true }),
+  image: text("image"),
+  phone: text("phone").unique(),
+  phoneVerified: timestamp("phone_verified", { withTimezone: true }),
+  /* Authorisation lives here, not in the token. The JWT carries a copy for
+     cheap reads, but this column is the source of truth — see auth.ts. */
+  role: text("role").$type<UserRole>().notNull().default("customer"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const accounts = pgTable(
+  "accounts",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    type: text("type").notNull(),
+    provider: text("provider").notNull(),
+    providerAccountId: text("provider_account_id").notNull(),
+    refresh_token: text("refresh_token"),
+    access_token: text("access_token"),
+    expires_at: integer("expires_at"),
+    token_type: text("token_type"),
+    scope: text("scope"),
+    id_token: text("id_token"),
+    session_state: text("session_state"),
+  },
+  (table) => [
+    primaryKey({ columns: [table.provider, table.providerAccountId] }),
+  ],
+);
+
+/* Unused under the JWT strategy — no session rows are ever written. The
+   adapter's type still requires the table, and leaving it out breaks a later
+   switch to database sessions, so it stays. */
+export const sessions = pgTable("sessions", {
+  sessionToken: text("session_token").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  expires: timestamp("expires", { withTimezone: true }).notNull(),
+});
+
+export const verificationTokens = pgTable(
+  "verification_tokens",
+  {
+    identifier: text("identifier").notNull(),
+    token: text("token").notNull(),
+    expires: timestamp("expires", { withTimezone: true }).notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.identifier, table.token] })],
+);
+
+/* Phone OTP. Nothing writes here until the flag is switched on. */
+export const otpCodes = pgTable(
+  "otp_codes",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => createId()),
+    phone: text("phone").notNull(),
+    /* bcrypt hash. The raw code never touches the database, so a dump of this
+       table cannot be replayed to sign in as anyone. */
+    codeHash: text("code_hash").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    attempts: integer("attempts").notNull().default(0),
+    consumedAt: timestamp("consumed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index("otp_codes_phone_created_idx").on(table.phone, table.createdAt)],
+);
+
+/* ── Customer account ───────────────────────────────────────── */
+
+export const addresses = pgTable("addresses", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => createId()),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  label: text("label"),
+  fullName: text("full_name").notNull(),
+  phone: text("phone").notNull(),
+  line1: text("line1").notNull(),
+  line2: text("line2"),
+  city: text("city").notNull(),
+  state: text("state").notNull(),
+  pincode: text("pincode").notNull(),
+  isDefault: boolean("is_default").notNull().default(false),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const wishlist = pgTable(
+  "wishlist",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    /* Slug, not a products.id FK: the catalogue still lives in
+       lib/data/products.ts and the DB products table is only a projection of
+       it. A FK here would break the moment the two drift. */
+    productSlug: text("product_slug").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [primaryKey({ columns: [table.userId, table.productSlug] })],
+);
+
+/* ── Admin ──────────────────────────────────────────────────── */
+
+export const productImages = pgTable(
+  "product_images",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => createId()),
+    productSlug: text("product_slug").notNull(),
+    /** Either a path under /public or an absolute Vercel Blob URL. */
+    url: text("url").notNull(),
+    source: text("source").$type<"static" | "blob">().notNull(),
+    alt: text("alt").notNull(),
+    blurDataUrl: text("blur_data_url"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("product_images_slug_sort_idx").on(table.productSlug, table.sortOrder),
+  ],
+);
+
+/* Append-only. No update or delete path should ever be written against this
+   table — an audit log you can edit is not an audit log. */
+export const adminAuditLog = pgTable("admin_audit_log", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => createId()),
+  actorUserId: text("actor_user_id")
+    .notNull()
+    .references(() => users.id),
+  action: text("action").notNull(),
+  entity: text("entity").notNull(),
+  entityId: text("entity_id").notNull(),
+  meta: jsonb("meta"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
 export type Product = typeof products.$inferSelect;
 export type NewProduct = typeof products.$inferInsert;
 export type Variant = typeof variants.$inferSelect;
@@ -105,3 +288,15 @@ export type OrderItem = typeof orderItems.$inferSelect;
 export type NewOrderItem = typeof orderItems.$inferInsert;
 export type WaitlistEntry = typeof waitlist.$inferSelect;
 export type OrderStatus = (typeof orderStatus.enumValues)[number];
+
+export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;
+export type Account = typeof accounts.$inferSelect;
+export type Address = typeof addresses.$inferSelect;
+export type NewAddress = typeof addresses.$inferInsert;
+export type WishlistRow = typeof wishlist.$inferSelect;
+export type ProductImage = typeof productImages.$inferSelect;
+export type NewProductImage = typeof productImages.$inferInsert;
+export type OtpCode = typeof otpCodes.$inferSelect;
+export type AdminAuditEntry = typeof adminAuditLog.$inferSelect;
+export type NewAdminAuditEntry = typeof adminAuditLog.$inferInsert;

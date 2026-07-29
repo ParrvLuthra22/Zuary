@@ -74,6 +74,23 @@ export function ProductCard({
           ) : null}
         </div>
 
+        {/* Vignette for frames shot on a lifted backdrop — see
+            Product.liftedBackdrop. Transparent over the garment, settling to
+            the page colour at the edges, so the card sits at the same
+            brightness as its neighbours without touching the source file or
+            dimming the trouser itself. */}
+        {product.liftedBackdrop ? (
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(ellipse at center, transparent 0%, var(--bg) 100%)",
+              opacity: 0.18,
+            }}
+          />
+        ) : null}
+
         {/* Desktop only: the brief says mobile has no hover state.
             The outer strip holds its final position and only becomes
             clickable on hover; the inner row does the sliding. Animating the

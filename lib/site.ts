@@ -11,6 +11,12 @@ export const SITE_TAGLINE = "Cut sharp.";
 export const SITE_DESCRIPTION =
   "Indian trousers cut in fixed runs. Three fits from one block, woven in Tamil Nadu and Rajasthan.";
 
+/**
+ * Static social card: the twelve-colourway grid, centre-cropped to 1200x630.
+ * A fallback only — opengraph-image.tsx is the primary and renders first.
+ */
+export const OG_FALLBACK = "/og.webp";
+
 import type { Metadata } from "next";
 
 type PageMeta = {
@@ -48,10 +54,24 @@ export function pageMetadata({
   noIndex,
 }: PageMeta): Metadata {
   const social = absoluteTitle ? title : `${title} — ${SITE_NAME}`;
+  /*
+   * Two cards, in preference order: the generated one first, then the static
+   * twelve-colourway grid. Scrapers that will not run the OG route — and a few
+   * that simply take the last entry — still get a real image instead of none.
+   *
+   * The null branch stays empty on purpose. A route passing null ships its own
+   * opengraph-image file, and Next only fills that in when the images key is
+   * absent; adding a fallback here would suppress the card it generates.
+   */
   const images =
     ogImage === null
       ? {}
-      : { images: [{ url: ogImage, width: 1200, height: 630, alt: social }] };
+      : {
+          images: [
+            { url: ogImage, width: 1200, height: 630, alt: social },
+            { url: OG_FALLBACK, width: 1200, height: 630, alt: social },
+          ],
+        };
 
   return {
     title: absoluteTitle ? { absolute: title } : title,
@@ -71,7 +91,7 @@ export function pageMetadata({
       card: "summary_large_image",
       title: social,
       description,
-      ...(ogImage === null ? {} : { images: [ogImage] }),
+      ...(ogImage === null ? {} : { images: [ogImage, OG_FALLBACK] }),
     },
   };
 }

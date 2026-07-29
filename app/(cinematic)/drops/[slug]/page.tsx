@@ -50,9 +50,12 @@ export default async function DropPage({ params }: Params) {
       <ChapterTitle drop={drop} />
       <ChapterManifesto />
       <ChapterProducts products={products} />
-      {drop.hasLookbook ? (
-        <ChapterLookbook images={drop.lookbookImages} />
-      ) : null}
+      {/* Chapter 4 now always renders: it opens on the twelve-colourway grid,
+          which exists. The location plates inside it are still gated on
+          hasLookbook. */}
+      <ChapterLookbook
+        images={drop.hasLookbook ? drop.lookbookImages : []}
+      />
       <ChapterMaterial />
       <ChapterClose />
     </>

@@ -6,6 +6,12 @@ import { cn } from "@/lib/utils";
 import { useNotifyStore } from "@/stores/notify";
 
 /**
+ * CURRENTLY UNUSED — intentionally retained. All three trousers are shot and
+ * live, so nothing renders this today. It is kept for ZUARY 04 and the Tier 01
+ * tees: set a product's status to 'coming-soon' and the shop grid, the trio
+ * rail and the PDP all pick this treatment back up on their own. Do not delete
+ * it as dead code.
+ *
  * The slot a trouser will occupy once it has been shot. Deliberately not a
  * photograph and deliberately not a grey box — a dashed frame reads as
  * "reserved", which is the honest state.

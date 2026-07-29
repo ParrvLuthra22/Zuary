@@ -25,6 +25,13 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 /**
+ * CURRENTLY UNUSED — intentionally retained, and deliberately still mounted.
+ * Nothing opens it now that all three trousers are live; it stays wired up so
+ * ZUARY 04 and the Tier 01 tees only have to flip a product's status to
+ * 'coming-soon'. Do not delete it as dead code, and do not unmount it from the
+ * layouts — an unmounted drawer is a silent no-op for whoever adds the next
+ * coming-soon product.
+ *
  * One drawer for the whole app, driven by the notify store — mounted beside
  * the cart sheet so any coming-soon card anywhere can open it without
  * threading state through the tree.
