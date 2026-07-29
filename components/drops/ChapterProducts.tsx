@@ -98,7 +98,7 @@ function ProductChapter({
             )}
             style={{ backgroundColor: product.swatch }}
           >
-            {!failed ? (
+            {product.images[0] && !failed ? (
               <div
                 data-parallax-img
                 className="absolute inset-0 will-change-transform"
@@ -107,7 +107,10 @@ function ProductChapter({
               >
                 <Image
                   src={product.images[0]}
-                  alt={`${product.name}, ${product.colour} ${product.fit} trousers`}
+                  alt={
+                    product.imageAlts?.[0] ??
+                    `${product.name}, ${product.colour} ${product.fit} trousers`
+                  }
                   fill
                   loading="lazy"
                   sizes="(min-width: 768px) 50vw, 100vw"

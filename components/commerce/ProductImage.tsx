@@ -1,52 +1,65 @@
-"use client";
-
 import Image from "next/image";
-import { useState } from "react";
 
+import { BLUR } from "@/lib/data/blur";
 import { cn } from "@/lib/utils";
 
 type ProductImageProps = {
   src: string;
   alt: string;
-  /** Shown in place of the photo when the file is not there yet. */
-  swatch: string;
-  sizes: string;
+  /** Key into BLUR, e.g. `reeh-01`. Without it the image fades in from nothing. */
+  blurKey?: string;
   priority?: boolean;
+  sizes?: string;
   className?: string;
 };
 
+/** Three across on desktop, two on tablet, full-bleed on phones. */
+const DEFAULT_SIZES =
+  "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw";
+
 /**
- * next/image renders a broken-image glyph when a file is missing. Until the
- * shoot lands, fall back to the product's swatch instead.
+ * A product frame with nothing around it.
+ *
+ * The photography is shot on a neutral near-black sweep that matches --bg
+ * exactly, so on the dark theme the image has no edge: the sweep and the page
+ * are one surface, and the trouser appears to float. A border, a radius or a
+ * raised background would all put the rectangle back and break that.
+ *
+ * The light theme is the opposite problem — a near-black photo on paper is a
+ * dark slab, and it needs a hairline to sit down properly. That is a CSS
+ * variant, not a branch on theme state, so it stays correct through SSR and
+ * through a theme toggle without a re-render.
  */
 export function ProductImage({
   src,
   alt,
-  swatch,
-  sizes,
+  blurKey,
   priority,
+  sizes = DEFAULT_SIZES,
   className,
 }: ProductImageProps) {
-  const [failed, setFailed] = useState(false);
+  const blurDataURL = blurKey ? BLUR[blurKey] : undefined;
 
   return (
     <div
-      className={cn("relative overflow-hidden", className)}
-      style={{ backgroundColor: swatch }}
-    >
-      {!failed ? (
-        <Image
-          src={src}
-          alt={alt}
-          fill
-          priority={priority}
-          sizes={sizes}
-          className="object-cover"
-          onError={() => setFailed(true)}
-        />
-      ) : (
-        <span className="sr-only">{alt}</span>
+      data-cursor="image"
+      className={cn(
+        "relative aspect-[4/5] w-full overflow-hidden bg-bg",
+        "light:border light:border-line light:bg-bg-raised",
+        className,
       )}
+    >
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        priority={priority}
+        sizes={sizes}
+        className="object-cover"
+        {...(blurDataURL
+          ? ({ placeholder: "blur", blurDataURL } as const)
+          : null)}
+      />
     </div>
   );
 }

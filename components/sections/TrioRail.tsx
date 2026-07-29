@@ -203,11 +203,14 @@ function Panel({ product }: { product: Product }) {
         data-panel-media
         className="absolute inset-0 transition-transform duration-[--dur-mid] ease-[--ease-out]"
       >
-        {!failed ? (
+        {product.images[0] && !failed ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={product.images[0]}
-            alt={`${product.name}, ${product.colour} ${product.fit} trousers`}
+            alt={
+              product.imageAlts?.[0] ??
+              `${product.name}, ${product.colour} ${product.fit} trousers`
+            }
             className="h-full w-full object-cover"
             onError={() => setFailed(true)}
           />

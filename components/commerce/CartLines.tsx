@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Minus, Plus, TriangleAlert, X } from "lucide-react";
 import Link from "next/link";
 
-import { ProductImage } from "@/components/commerce/ProductImage";
+import { ProductThumb } from "@/components/commerce/ProductThumb";
 import type { ValidatedLine } from "@/lib/db/queries";
 import { dur, easeOut } from "@/lib/motion/easing";
 import { cn, formatINR } from "@/lib/utils";
@@ -70,12 +70,10 @@ export function CartLineList({
               className="overflow-hidden"
             >
               <div className={cn("flex gap-4 py-5", compact ? "px-6" : "")}>
-                <ProductImage
-                  src={line.product.images[0]}
-                  alt={line.product.name}
-                  swatch={line.product.swatch}
+                <ProductThumb
+                  product={line.product}
                   sizes="96px"
-                  className="h-30 w-24 shrink-0 rounded-sm border border-line"
+                  className="h-30 w-24"
                 />
 
                 <div className="flex min-w-0 flex-1 flex-col justify-between">

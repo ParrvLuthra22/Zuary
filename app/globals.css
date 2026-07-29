@@ -5,11 +5,23 @@
 /* Theme is driven by data-theme on <html>, not a class. Dark is the default. */
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
+/* The mirror of `dark`, for the rare rule that only makes sense on paper —
+   see ProductImage, where a near-black photo needs an edge on a light page
+   and none on a dark one. `:is` rather than `:where` so it outranks the
+   base utility it is overriding instead of relying on source order. */
+@custom-variant light (&:is([data-theme="light"] *));
+
 :root {
   /* ── Palette ───────────────────────────────────────────── */
-  --carbon: #121416;
-  --graphite: #1c1e20;
-  --slate: #2a2e31;
+  /* The three dark tones are dead-neutral (R=G=B) on purpose. The product
+     photography is shot on a neutral near-black sweep — sampled #171718 to
+     #1C1C1C — so any blue cast here would frame every image as a visible
+     rectangle. Matched, the photo backdrop and the page backdrop are the
+     same surface. The lighter tones below keep their cast; nothing sits on
+     them edge-to-edge. */
+  --carbon: #101010;
+  --graphite: #1a1a1a;
+  --slate: #262626;
   --steel: #4a4f54;
   --fog: #dde0e0;
   --off-white: #f4f5f3;

@@ -28,7 +28,13 @@ export default function HomePage() {
       <JsonLd data={organizationSchema()} />
 
       {/* 1 — /public/sequence/hero is empty, so the hero cross-dissolves the
-          KOHL frames. Switch to mode="sequence" once the shoot lands. */}
+          KOHL frames. Switch to mode="sequence" once the shoot lands.
+
+          KOHL has not been shot, so right now this renders with no imagery at
+          all. REEH is the only set we have, but the hero's spec lines, outro
+          name, price and CTA are all KOHL — pointing the images at REEH
+          without moving that copy would show sand cotton-linen under "280 GSM
+          COTTON TWILL". Move both together or neither. */}
       <HeroScrub mode="crossfade" fallbackImages={kohl?.images ?? []} />
 
       {/* 2 */}

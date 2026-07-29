@@ -8,7 +8,7 @@ import { useState } from "react";
 import { useForm, type UseFormRegisterReturn } from "react-hook-form";
 import { toast } from "sonner";
 
-import { ProductImage } from "@/components/commerce/ProductImage";
+import { ProductThumb } from "@/components/commerce/ProductThumb";
 import { useCartValidation } from "@/components/commerce/useCartValidation";
 import { ButtonZ } from "@/components/ui/button-z";
 import { checkoutFormSchema, type CheckoutFormInput } from "@/lib/checkout";
@@ -316,12 +316,10 @@ export function CheckoutForm() {
           <ul className="mt-6 space-y-4">
             {lines.map((line) => (
               <li key={`${line.slug}-${line.size}`} className="flex gap-3">
-                <ProductImage
-                  src={line.product.images[0]}
-                  alt={line.product.name}
-                  swatch={line.product.swatch}
+                <ProductThumb
+                  product={line.product}
                   sizes="56px"
-                  className="h-18 w-14 shrink-0 rounded-sm border border-line"
+                  className="h-18 w-14"
                 />
                 <div className="flex flex-1 items-start justify-between gap-3">
                   <div>

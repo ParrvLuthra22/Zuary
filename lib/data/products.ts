@@ -9,6 +9,8 @@ export type Product = {
   deva: string;
   devaMeaning: string;
   fit: "tailored" | "straight" | "pleated";
+  /** What the leg actually finishes with. The copy has to match the photo. */
+  hem: "turn-up" | "plain";
   swatch: string;
   /** Human name for the swatch, shown beside it on the product page. */
   colour: string;
@@ -22,7 +24,20 @@ export type Product = {
   fabricStory: string;
   care: string[];
   sizes: Size[];
+  /** Empty until the garment has been shot. Never point at a file that is not there. */
   images: string[];
+  /**
+   * Per-frame alt text. Photographed products describe each shot; the array is
+   * index-matched to `images`, so anything without photography leaves it off.
+   */
+  imageAlts?: string[];
+  /** True only when `images` points at real photography of this garment. */
+  hasPhotography: boolean;
+  /**
+   * `coming-soon` means the garment is real and manufactured but not yet shot,
+   * so the site says so rather than dressing the gap up as a product.
+   */
+  status: "available" | "coming-soon";
   drop: string;
 };
 
@@ -36,6 +51,7 @@ export const PRODUCTS: Product[] = [
     deva: "कोहल",
     devaMeaning: "kohl, deep black",
     fit: "tailored",
+    hem: "plain",
     swatch: "#121416",
     colour: "Deep black",
     price: 2999,
@@ -50,14 +66,9 @@ export const PRODUCTS: Product[] = [
       "The twill is woven in Tirupur from long-staple cotton and finished without a resin coat, so it softens instead of going slack. At 280 GSM it is heavy enough to hang straight off the hip without a press, and dense enough that the diagonal weave reads as texture rather than sheen. Lighter cloth collapses at the knee by the third wear. This does not. The black is piece-dyed, so it fades along the seams rather than patching.",
     care: ["Cold wash, inside out.", "Hang dry. No tumble.", "Iron on reverse."],
     sizes: ["S", "M", "L", "XL"],
-    images: [
-      "/products/kohl/01.webp",
-      "/products/kohl/02.webp",
-      "/products/kohl/03.webp",
-      "/products/kohl/04.webp",
-      "/products/kohl/05.webp",
-      "/products/kohl/06.webp",
-    ],
+    images: [],
+    hasPhotography: false,
+    status: "coming-soon",
     drop: "the-trouser-trio",
   },
   {
@@ -67,6 +78,7 @@ export const PRODUCTS: Product[] = [
     deva: "धूल",
     devaMeaning: "dust, dry earth",
     fit: "straight",
+    hem: "plain",
     swatch: "#4A4F54",
     colour: "Dry earth",
     price: 2999,
@@ -86,14 +98,9 @@ export const PRODUCTS: Product[] = [
       "Wash separately for the first three cycles.",
     ],
     sizes: ["S", "M", "L", "XL"],
-    images: [
-      "/products/dhool/01.webp",
-      "/products/dhool/02.webp",
-      "/products/dhool/03.webp",
-      "/products/dhool/04.webp",
-      "/products/dhool/05.webp",
-      "/products/dhool/06.webp",
-    ],
+    images: [],
+    hasPhotography: false,
+    status: "coming-soon",
     drop: "the-trouser-trio",
   },
   {
@@ -103,7 +110,10 @@ export const PRODUCTS: Product[] = [
     deva: "रीह",
     devaMeaning: "sand, desert wind",
     fit: "pleated",
-    swatch: "#B5A183",
+    hem: "turn-up",
+    // Sampled off the finished photography. The old value was a shade too
+    // yellow and read as a different cloth beside the real frames.
+    swatch: "#BCAC9A",
     colour: "Desert sand",
     price: 3299,
     fabric: "Cotton-linen blend",
@@ -112,14 +122,14 @@ export const PRODUCTS: Product[] = [
     weave: "Plain weave, 60/40 cotton-linen",
     shrinkage: "Up to 3%, linen moves",
     description:
-      "Two forward pleats, deep rise, tapered from the knee. The pleats stay shut when you stand and open when you sit.",
+      "A single forward pleat, deep rise, tapered from the knee, finished with a turn-up. The pleat stays shut when you stand and opens when you sit.",
     care: [
       "Cold wash, inside out.",
       "Hang dry. No tumble.",
-      "Iron on reverse, pleats last.",
+      "Iron on reverse, pleat last.",
     ],
     fabricStory:
-      "Sixty-forty cotton to linen, woven in Bhilwara. The linen is what makes the pleats hold a fold and what makes the cloth wrinkle — you get one without the other. At 240 GSM it is the lightest of the three, cut that way so the pleats have room to move rather than standing off the waistband. The sand tone comes from the undyed linen showing through a light cotton dye. It will lighten a shade in the first year.",
+      "Sixty-forty cotton to linen, woven in Bhilwara. The linen is what makes the pleat hold a fold and what makes the cloth wrinkle — you get one without the other. At 240 GSM it is the lightest of the three, cut that way so the pleat has room to move rather than standing off the waistband. The sand tone comes from the undyed linen showing through a light cotton dye. It will lighten a shade in the first year.",
     sizes: ["S", "M", "L", "XL"],
     images: [
       "/products/reeh/01.webp",
@@ -129,11 +139,29 @@ export const PRODUCTS: Product[] = [
       "/products/reeh/05.webp",
       "/products/reeh/06.webp",
     ],
+    imageAlts: [
+      "REEH trouser in sand, full length, front, on a hanger",
+      "REEH trouser, three-quarter view showing the side seam",
+      "Waistband detail — side-adjuster tab, belt loop and ZUARY triangle label",
+      "Single forward pleat and slant pocket construction",
+      "Turn-up hem detail",
+      "REEH trouser folded flat, showing the buttoned welt back pocket",
+    ],
+    hasPhotography: true,
+    status: "available",
     drop: "the-trouser-trio",
   },
 ];
 
 export const getProduct = (slug: string) => PRODUCTS.find((p) => p.slug === slug);
+
+/** Shot, priced and buyable. */
+export const availableProducts = () =>
+  PRODUCTS.filter((p) => p.status === "available");
+
+/** Made, but not photographed yet — listed honestly, not hidden. */
+export const comingSoonProducts = () =>
+  PRODUCTS.filter((p) => p.status === "coming-soon");
 
 export type SizeGuideRow = {
   size: Size;

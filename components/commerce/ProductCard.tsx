@@ -27,6 +27,7 @@ export function ProductCard({
   const [primaryFailed, setPrimaryFailed] = useState(false);
   const [secondaryFailed, setSecondaryFailed] = useState(false);
 
+  const primary = product.images[0];
   const secondary = product.images[1];
 
   function addSize(size: Size) {
@@ -42,10 +43,13 @@ export function ProductCard({
       >
         {/* Scaling this wrapper rather than the images keeps the size bar still. */}
         <div className="absolute inset-0 transition-transform duration-[400ms] ease-[--ease-out] group-hover:scale-[1.04]">
-          {!primaryFailed ? (
+          {primary && !primaryFailed ? (
             <Image
-              src={product.images[0]}
-              alt={`${product.name}, ${product.colour} ${product.fit} trousers`}
+              src={primary}
+              alt={
+                product.imageAlts?.[0] ??
+                `${product.name}, ${product.colour} ${product.fit} trousers`
+              }
               fill
               priority={priority}
               sizes={SIZES_ATTR}
