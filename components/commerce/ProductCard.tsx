@@ -20,6 +20,11 @@ type ProductCardProps = {
    * simply absent rather than rendered in a guessed state.
    */
   wishlist?: { signedIn: boolean; saved: boolean };
+  /**
+   * Gallery rows from the database. Falls back to the committed catalogue when
+   * omitted, so cards rendered from a client component still show something.
+   */
+  images?: { url: string; alt: string; blurDataUrl: string | null }[];
 };
 
 /** Matches the shop grid: 1 col, 2 from sm, 3 from lg. */
@@ -30,13 +35,21 @@ export function ProductCard({
   priority,
   className,
   wishlist,
+  images,
 }: ProductCardProps) {
   const add = useCartStore((s) => s.add);
   const [primaryFailed, setPrimaryFailed] = useState(false);
   const [secondaryFailed, setSecondaryFailed] = useState(false);
 
-  const primary = product.images[0];
-  const secondary = product.images[1];
+  const gallery =
+    images ??
+    product.images.map((url, i) => ({
+      url,
+      alt: product.imageAlts?.[i] ?? "",
+      blurDataUrl: null,
+    }));
+  const primary = gallery[0];
+  const secondary = gallery[1];
 
   function addSize(size: Size) {
     add(product.slug, size, 1);
@@ -53,9 +66,9 @@ export function ProductCard({
         <div className="absolute inset-0 transition-transform duration-[400ms] ease-[--ease-out] group-hover:scale-[1.04]">
           {primary && !primaryFailed ? (
             <Image
-              src={primary}
+              src={primary.url}
               alt={
-                product.imageAlts?.[0] ??
+                primary.alt ||
                 `${product.name}, ${product.colour} ${product.fit} trousers`
               }
               fill
@@ -71,7 +84,7 @@ export function ProductCard({
 
           {secondary && !secondaryFailed ? (
             <Image
-              src={secondary}
+              src={secondary.url}
               alt=""
               aria-hidden
               fill

@@ -11,6 +11,7 @@ import { ProductGallery } from "@/components/commerce/ProductGallery";
 import { WishlistButton } from "@/components/commerce/WishlistButton";
 import { TriangleA } from "@/components/layout/Wordmark";
 import { getVariantStock, listWishlistSlugs } from "@/lib/db/queries";
+import { getProductImages } from "@/lib/product-images";
 import { JsonLd, productSchema } from "@/lib/schema";
 import { pageMetadata } from "@/lib/site";
 import {
@@ -63,6 +64,9 @@ export default async function ProductPage({ params }: Params) {
   // rather than sold out, so the page still works without one.
   const stock = await getVariantStock(slug);
 
+  // Images come from the database now — static and Blob rows read identically.
+  const gallery = await getProductImages(slug);
+
   /* Wishlist state for every heart on this page — this product's and the two
      sibling cards'. Fetched once as a list rather than per card, so a sibling
      the customer has already saved shows filled instead of empty. Never allowed
@@ -86,7 +90,7 @@ export default async function ProductPage({ params }: Params) {
 
       <article className="md:flex md:items-start">
         <div className="md:w-[58%]">
-          <ProductGallery product={product} />
+          <ProductGallery product={product} images={gallery} />
         </div>
 
         <div className="md:sticky md:top-28 md:w-[42%] md:self-start">
@@ -101,7 +105,7 @@ export default async function ProductPage({ params }: Params) {
         </div>
       </article>
 
-      <FabricBand product={product} />
+      <FabricBand product={product} images={gallery} />
       <CareCards product={product} />
 
       <section className="px-6 py-24 md:px-12">
@@ -206,7 +210,13 @@ function InProduction({ product }: { product: Product }) {
   );
 }
 
-function FabricBand({ product }: { product: Product }) {
+function FabricBand({
+  product,
+  images,
+}: {
+  product: Product;
+  images: { url: string }[];
+}) {
   const specs = [
     { label: "Weight", value: product.weight },
     { label: "Mill", value: product.mill },
@@ -229,10 +239,10 @@ function FabricBand({ product }: { product: Product }) {
         }
         aria-hidden
       >
-        {product.images[4] ? (
+        {images[4] ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={product.images[4]}
+            src={images[4].url}
             alt=""
             loading="lazy"
             className="absolute inset-0 h-full w-full object-cover"

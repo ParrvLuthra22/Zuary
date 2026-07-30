@@ -4,8 +4,8 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
-import { BLUR, blurKeyFor } from "@/lib/data/blur";
 import type { Product } from "@/lib/data/products";
+import type { GalleryImage } from "@/lib/product-images";
 import { dur, easeOut } from "@/lib/motion/easing";
 import { cn } from "@/lib/utils";
 
@@ -18,7 +18,14 @@ const SIZES_ATTR = "(min-width: 768px) 58vw, 100vw";
  * image in the DOM twice, and `display: none` does not stop the browser
  * fetching them.
  */
-export function ProductGallery({ product }: { product: Product }) {
+export function ProductGallery({
+  product,
+  images,
+}: {
+  product: Product;
+  /** Gallery rows from the database — see lib/product-images.ts. */
+  images: GalleryImage[];
+}) {
   const railRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(0);
 
@@ -28,15 +35,15 @@ export function ProductGallery({ product }: { product: Product }) {
     const onScroll = () => {
       if (rail.clientWidth === 0) return;
       const i = Math.round(rail.scrollLeft / rail.clientWidth);
-      setActive(Math.min(product.images.length - 1, Math.max(0, i)));
+      setActive(Math.min(images.length - 1, Math.max(0, i)));
     };
     rail.addEventListener("scroll", onScroll, { passive: true });
     return () => rail.removeEventListener("scroll", onScroll);
-  }, [product.images.length]);
+  }, [images.length]);
 
   // Nothing to page through until the garment has been shot. The buy box still
   // clones frame 0 for the fly-to-cart animation, so the frame has to exist.
-  if (!product.hasPhotography) {
+  if (images.length === 0) {
     return (
       <div
         data-gallery-frame={0}
@@ -56,12 +63,18 @@ export function ProductGallery({ product }: { product: Product }) {
         ref={railRef}
         className="flex snap-x snap-mandatory overflow-x-auto md:block md:snap-none md:overflow-x-visible"
       >
-        {product.images.map((src, i) => (
+        {images.map((image, i) => (
           <div
-            key={src}
+            key={image.id}
             className="w-full shrink-0 snap-center md:w-auto md:shrink"
           >
-            <Frame product={product} src={src} index={i} priority={i < 2} />
+            <Frame
+              product={product}
+              image={image}
+              index={i}
+              total={images.length}
+              priority={i < 2}
+            />
           </div>
         ))}
       </div>
@@ -69,9 +82,9 @@ export function ProductGallery({ product }: { product: Product }) {
       {/* Counter belongs to the mobile rail only. */}
       <div className="flex items-center justify-between px-6 py-4 md:hidden">
         <div className="flex gap-1.5" aria-hidden>
-          {product.images.map((src, i) => (
+          {images.map((image, i) => (
             <span
-              key={src}
+              key={image.id}
               className={cn(
                 "h-1 w-5 rounded-full transition-colors duration-[--dur-micro]",
                 i === active ? "bg-accent" : "bg-line",
@@ -80,7 +93,7 @@ export function ProductGallery({ product }: { product: Product }) {
           ))}
         </div>
         <p className="t-label text-fg-muted">
-          {active + 1} / {product.images.length}
+          {active + 1} / {images.length}
         </p>
       </div>
     </>
@@ -89,17 +102,20 @@ export function ProductGallery({ product }: { product: Product }) {
 
 function Frame({
   product,
-  src,
+  image,
   index,
+  total,
   priority,
 }: {
   product: Product;
-  src: string;
+  image: GalleryImage;
   index: number;
+  total: number;
   priority: boolean;
 }) {
   const [failed, setFailed] = useState(false);
-  const blurDataURL = BLUR[blurKeyFor(src) ?? ""];
+  const src = image.url;
+  const blurDataURL = image.blurDataUrl ?? undefined;
 
   return (
     <div
@@ -114,8 +130,8 @@ function Frame({
         <Image
           src={src}
           alt={
-            product.imageAlts?.[index] ??
-            `${product.name}, ${product.colour} ${product.fabric.toLowerCase()} trousers in a ${product.fit} cut — view ${index + 1} of ${product.images.length}`
+            image.alt ||
+            `${product.name}, ${product.colour} ${product.fabric.toLowerCase()} trousers in a ${product.fit} cut — view ${index + 1} of ${total}`
           }
           fill
           priority={priority}

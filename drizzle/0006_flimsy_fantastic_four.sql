@@ -1,0 +1,20 @@
+ALTER TABLE "products" ADD COLUMN "series" integer;--> statement-breakpoint
+ALTER TABLE "products" ADD COLUMN "deva" text;--> statement-breakpoint
+ALTER TABLE "products" ADD COLUMN "deva_meaning" text;--> statement-breakpoint
+ALTER TABLE "products" ADD COLUMN "fit" text;--> statement-breakpoint
+ALTER TABLE "products" ADD COLUMN "hem" text;--> statement-breakpoint
+ALTER TABLE "products" ADD COLUMN "swatch" text;--> statement-breakpoint
+ALTER TABLE "products" ADD COLUMN "colour" text;--> statement-breakpoint
+ALTER TABLE "products" ADD COLUMN "fabric" text;--> statement-breakpoint
+ALTER TABLE "products" ADD COLUMN "weight" text;--> statement-breakpoint
+ALTER TABLE "products" ADD COLUMN "mill" text;--> statement-breakpoint
+ALTER TABLE "products" ADD COLUMN "weave" text;--> statement-breakpoint
+ALTER TABLE "products" ADD COLUMN "shrinkage" text;--> statement-breakpoint
+ALTER TABLE "products" ADD COLUMN "description" text;--> statement-breakpoint
+ALTER TABLE "products" ADD COLUMN "fabric_story" text;--> statement-breakpoint
+ALTER TABLE "products" ADD COLUMN "care" jsonb;--> statement-breakpoint
+ALTER TABLE "products" ADD COLUMN "status" text;--> statement-breakpoint
+ALTER TABLE "products" ADD COLUMN "has_photography" boolean;--> statement-breakpoint
+ALTER TABLE "products" ADD COLUMN "lifted_backdrop" boolean;--> statement-breakpoint
+ALTER TABLE "products" ADD COLUMN "drop" text;--> statement-breakpoint
+ALTER TABLE "products" ADD COLUMN "updated_at" timestamp with time zone DEFAULT now() NOT NULL;

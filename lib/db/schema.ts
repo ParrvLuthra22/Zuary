@@ -22,12 +22,45 @@ export const orderStatus = pgEnum("order_status", [
   "cancelled",
 ]);
 
+/**
+ * The catalogue.
+ *
+ * These columns used to live in lib/data/products.ts as a hand-edited array.
+ * They are here so the admin can edit them; that file is now a seed, not a
+ * runtime source. Everything is nullable except the four original columns —
+ * rows written before this migration have none of it, and a half-populated
+ * product should still render rather than throw.
+ */
 export const products = pgTable("products", {
   id: serial("id").primaryKey(),
   slug: text("slug").notNull().unique(),
   name: text("name").notNull(),
   priceInr: integer("price_inr").notNull(),
   active: boolean("active").notNull().default(true),
+
+  series: integer("series"),
+  deva: text("deva"),
+  devaMeaning: text("deva_meaning"),
+  fit: text("fit").$type<"tailored" | "straight" | "pleated">(),
+  hem: text("hem").$type<"turn-up" | "plain">(),
+  swatch: text("swatch"),
+  colour: text("colour"),
+  fabric: text("fabric"),
+  weight: text("weight"),
+  mill: text("mill"),
+  weave: text("weave"),
+  shrinkage: text("shrinkage"),
+  description: text("description"),
+  fabricStory: text("fabric_story"),
+  /** Repeatable list, edited as rows in the admin. */
+  care: jsonb("care").$type<string[]>(),
+  status: text("status").$type<"available" | "coming-soon">(),
+  hasPhotography: boolean("has_photography"),
+  liftedBackdrop: boolean("lifted_backdrop"),
+  drop: text("drop"),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
 });
 
 export const variants = pgTable("variants", {

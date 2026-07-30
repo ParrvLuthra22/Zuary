@@ -12,7 +12,8 @@
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx --env-file=.env.local scripts/seed.ts",
     "typecheck": "tsc --noEmit",
-    "email:dev": "email dev --dir ./emails"
+    "email:dev": "email dev --dir ./emails",
+    "db:seed-images": "tsx --env-file=.env.local scripts/seed-images.ts"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.3",

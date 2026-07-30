@@ -1,13 +1,38 @@
+import { StockGrid } from "@/components/admin/StockGrid";
 import { requireAdminPage } from "@/lib/admin/guard";
+import { listStockGrid } from "@/lib/db/admin-queries";
 
-/** Placeholder — stock management is not built yet. */
-export default async function AdminPlaceholderPage() {
+export default async function AdminStockPage() {
+  // Authorisation before any query — see requireAdminPage.
   await requireAdminPage();
 
+  let cells;
+  try {
+    cells = await listStockGrid();
+  } catch (error) {
+    console.error("[admin/stock]", error);
+    return (
+      <div className="py-16">
+        <p className="font-mono text-sm text-fg">Could not load stock.</p>
+        <p className="mt-2 font-mono text-xs text-fg-muted">
+          The database is unreachable. Nothing has been changed.
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className="py-16">
-      <h1 className="font-mono text-sm tracking-wide text-fg uppercase">stock</h1>
-      <p className="mt-3 font-mono text-xs text-fg-muted">Not built yet.</p>
-    </div>
+    <>
+      <h1 className="mb-4 font-mono text-sm tracking-wide text-fg uppercase">
+        Stock
+      </h1>
+      {cells.length === 0 ? (
+        <p className="py-16 text-center font-mono text-xs text-fg-muted">
+          No variants. Run <code>npm run db:seed</code>.
+        </p>
+      ) : (
+        <StockGrid cells={cells} />
+      )}
+    </>
   );
 }

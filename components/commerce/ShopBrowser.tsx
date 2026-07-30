@@ -40,10 +40,16 @@ const parseList = (raw: string | null) =>
 export function ShopBrowser({
   products,
   wishlist,
+  galleries,
 }: {
   products: Product[];
   /** Resolved on the server by the shop page; see WishlistButton. */
   wishlist?: { signedIn: boolean; savedSlugs: string[] };
+  /** Per-slug gallery rows, resolved on the server. */
+  galleries?: Record<
+    string,
+    { url: string; alt: string; blurDataUrl: string | null }[]
+  >;
 }) {
   const router = useRouter();
   const params = useSearchParams();
@@ -281,6 +287,7 @@ export function ShopBrowser({
                           }
                         : undefined
                     }
+                    images={galleries?.[product.slug]}
                   />
                 ) : (
                   <ComingSoonCard product={product} />

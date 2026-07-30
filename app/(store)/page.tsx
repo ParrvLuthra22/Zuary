@@ -13,22 +13,18 @@ import {
   PRODUCTS,
   availableProducts,
   comingSoonProducts,
-  getProduct,
 } from "@/lib/data/products";
 
+import { getProductImages } from "@/lib/product-images";
 import { JsonLd, organizationSchema } from "@/lib/schema";
 import { SITE_DESCRIPTION, pageMetadata } from "@/lib/site";
-
-const hero = getProduct("kohl");
 
 /**
  * Full length → detail → full length. Cross-dissolving straight down 01…06
  * runs two wides then four macros and the back half stops reading as the same
  * garment; this order keeps returning to the silhouette.
  */
-const HERO_FRAMES = [0, 1, 5, 3, 4, 2]
-  .map((i) => hero?.images[i])
-  .filter((src): src is string => Boolean(src));
+const HERO_ORDER = [0, 1, 5, 3, 4, 2];
 
 export const metadata: Metadata = pageMetadata({
   title: "ZUARY — Cut sharp.",
@@ -37,7 +33,14 @@ export const metadata: Metadata = pageMetadata({
   path: "/",
 });
 
-export default function HomePage() {
+export default async function HomePage() {
+  /* Hero frames come from the database like everything else, so an image
+     swapped in the admin changes the homepage too. */
+  const gallery = await getProductImages("kohl");
+  const heroFrames = HERO_ORDER.map((i) => gallery[i]?.url).filter(
+    (url): url is string => Boolean(url),
+  );
+
   return (
     <>
       <JsonLd data={organizationSchema()} />
@@ -49,7 +52,7 @@ export default function HomePage() {
           rather than describing a different trouser. */}
       <HeroScrub
         mode="crossfade"
-        fallbackImages={HERO_FRAMES}
+        fallbackImages={heroFrames}
         productSlug="kohl"
       />
 

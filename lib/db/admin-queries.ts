@@ -1,12 +1,25 @@
 import "server-only";
 
-import { and, count, desc, eq, ilike, inArray, or, sql, sum } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  ilike,
+  inArray,
+  or,
+  sql,
+  sum,
+} from "drizzle-orm";
 
 import { db } from "./index";
 import {
   adminAuditLog,
   orderItems,
   orders,
+  productImages,
+  products,
   users,
   variants,
   waitlist,
@@ -218,4 +231,68 @@ export async function getCustomerForAdmin(userId: string) {
 
 export async function listWaitlistForAdmin() {
   return db.select().from(waitlist).orderBy(desc(waitlist.createdAt));
+}
+
+/* ── Products & stock ──────────────────────────────────────── */
+
+/**
+ * Product rows with their image count and total stock.
+ *
+ * Two grouped side queries rather than joins: joining products to both
+ * variants and productImages at once multiplies the rows and every aggregate
+ * comes out wrong (a classic fan-out). Cheaper and correct to group each
+ * separately and stitch in memory.
+ */
+export async function listProductsForAdmin() {
+  const rows = await db.select().from(products).orderBy(asc(products.slug));
+
+  const stock = await db
+    .select({
+      productId: variants.productId,
+      total: sql<number>`coalesce(sum(${variants.stock}), 0)::int`,
+    })
+    .from(variants)
+    .groupBy(variants.productId);
+
+  const images = await db
+    .select({
+      productSlug: productImages.productSlug,
+      count: count(),
+    })
+    .from(productImages)
+    .groupBy(productImages.productSlug);
+
+  const stockBy = new Map(stock.map((s) => [s.productId, s.total]));
+  const imagesBy = new Map(images.map((i) => [i.productSlug, i.count]));
+
+  return rows.map((row) => ({
+    ...row,
+    totalStock: stockBy.get(row.id) ?? 0,
+    imageCount: imagesBy.get(row.slug) ?? 0,
+  }));
+}
+
+export async function listImagesForAdmin(slug: string) {
+  return db
+    .select()
+    .from(productImages)
+    .where(eq(productImages.productSlug, slug))
+    .orderBy(asc(productImages.sortOrder));
+}
+
+/** Every variant, grouped for the stock grid. */
+export async function listStockGrid() {
+  return db
+    .select({
+      variantId: variants.id,
+      productId: products.id,
+      productSlug: products.slug,
+      productName: products.name,
+      size: variants.size,
+      sku: variants.sku,
+      stock: variants.stock,
+    })
+    .from(variants)
+    .innerJoin(products, eq(variants.productId, products.id))
+    .orderBy(asc(products.slug), asc(variants.size));
 }

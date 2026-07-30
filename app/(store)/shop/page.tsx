@@ -10,6 +10,7 @@ import { RevealText } from "@/components/motion/RevealText";
 import { Marquee } from "@/components/sections/Marquee";
 import { PRODUCTS, availableProducts } from "@/lib/data/products";
 import { listWishlistSlugs } from "@/lib/db/queries";
+import { getProductImagesForSlugs } from "@/lib/product-images";
 import { pageMetadata } from "@/lib/site";
 
 export const metadata: Metadata = pageMetadata({
@@ -50,7 +51,10 @@ export default async function ShopPage() {
     }
   }
 
-  const lcp = availableProducts()[0]?.images[0];
+  /* Galleries from the database, one query for the whole grid. */
+  const galleries = await getProductImagesForSlugs(PRODUCTS.map((p) => p.slug));
+
+  const lcp = galleries[availableProducts()[0]?.slug ?? ""]?.[0]?.url;
   if (lcp) {
     ReactDOM.preload(optimized(lcp, 1080), {
       as: "image",
@@ -82,6 +86,7 @@ export default async function ShopPage() {
         <ShopBrowser
           products={PRODUCTS}
           wishlist={{ signedIn: Boolean(session?.user), savedSlugs }}
+          galleries={galleries}
         />
       </Suspense>
 
