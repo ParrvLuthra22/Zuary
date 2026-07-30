@@ -1,6 +1,12 @@
 import type { ProductSlug } from "./products";
 
-export type DropStatus = "teased" | "live" | "archived";
+/**
+ * `upcoming` is the early-access window: the drop is dated and its products are
+ * real, but it is not open to everyone yet. Distinct from `teased`, which is an
+ * announcement with nothing behind it — a teased drop has nothing to show an
+ * early-access customer, an upcoming one does.
+ */
+export type DropStatus = "teased" | "upcoming" | "live" | "archived";
 
 export type LookbookSpan = "full" | "half" | "third";
 

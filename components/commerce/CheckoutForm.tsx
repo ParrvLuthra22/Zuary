@@ -6,9 +6,15 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Script from "next/script";
 import { useState } from "react";
-import { useForm, type UseFormRegisterReturn } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
+import {
+  AddressCoreFields,
+  Field,
+  FIELD,
+  errorAt,
+} from "@/components/commerce/AddressFields";
 import { ProductThumb } from "@/components/commerce/ProductThumb";
 import { useCartValidation } from "@/components/commerce/useCartValidation";
 import { TriangleA } from "@/components/layout/Wordmark";
@@ -16,7 +22,6 @@ import { ButtonZ } from "@/components/ui/button-z";
 import { Skeleton } from "@/components/ui/skeleton";
 import { checkoutFormSchema, type CheckoutFormInput } from "@/lib/checkout";
 import { shippingFor } from "@/lib/data/policies";
-import { INDIAN_STATES, UNION_TERRITORIES } from "@/lib/data/states";
 import { cn, formatINR } from "@/lib/utils";
 import {
   cartLines,
@@ -316,75 +321,11 @@ function CheckoutFormInner() {
               )}
             </Field>
 
-            <Field label="Address line 1" error={errors.address?.line1?.message}>
-              {(id, describedBy) => (
-                <input
-                  id={id}
-                  autoComplete="address-line1"
-                  placeholder=" "
-                  aria-describedby={describedBy}
-                  {...register("address.line1")}
-                  className={FIELD}
-                />
-              )}
-            </Field>
-
-            <Field label="Address line 2 (optional)">
-              {(id, describedBy) => (
-                <input
-                  id={id}
-                  autoComplete="address-line2"
-                  placeholder=" "
-                  aria-describedby={describedBy}
-                  {...register("address.line2")}
-                  className={FIELD}
-                />
-              )}
-            </Field>
-
-            <Field label="Landmark (optional)">
-              {(id, describedBy) => (
-                <input
-                  id={id}
-                  placeholder=" "
-                  aria-describedby={describedBy}
-                  {...register("address.landmark")}
-                  className={FIELD}
-                />
-              )}
-            </Field>
-
-            <div className="grid gap-5 sm:grid-cols-2">
-              <Field label="City" error={errors.address?.city?.message}>
-                {(id, describedBy) => (
-                  <input
-                    id={id}
-                    autoComplete="address-level2"
-                    placeholder=" "
-                  aria-describedby={describedBy}
-                    {...register("address.city")}
-                    className={FIELD}
-                  />
-                )}
-              </Field>
-              <Field label="PIN code" error={errors.address?.pincode?.message}>
-                {(id, describedBy) => (
-                  <input
-                    id={id}
-                    inputMode="numeric"
-                    autoComplete="postal-code"
-                    placeholder=" "
-                  aria-describedby={describedBy}
-                    {...register("address.pincode")}
-                    className={FIELD}
-                  />
-                )}
-              </Field>
-            </div>
-
-            <StateSelect
-              registration={register("address.state")}
-              error={errors.address?.state?.message}
+            <AddressCoreFields
+              register={register}
+              errorFor={(field) => errorAt(errors, `address.${field}`)}
+              prefix="address."
+              selectId="checkout-state"
             />
 
             <label className="flex cursor-pointer items-center gap-3 pt-2">
@@ -469,109 +410,9 @@ function CheckoutFormInner() {
   );
 }
 
-const FIELD =
-  "peer h-14 w-full rounded-sm border border-line bg-bg px-4 pt-5 pb-1 font-mono text-sm text-fg " +
-  "outline-none transition-colors duration-[--dur-micro] placeholder-shown:pt-0 focus:border-accent";
 
-let uid = 0;
 
 /** Floating label: the input carries placeholder=" " so :placeholder-shown works. */
-function Field({
-  label,
-  error,
-  prefix,
-  children,
-}: {
-  label: string;
-  error?: string;
-  prefix?: string;
-  /** Receives the input id and the id of its error message, if any. */
-  children: (id: string, describedBy?: string) => React.ReactNode;
-}) {
-  const [id] = useState(() => `f${++uid}`);
-  const errorId = `${id}-error`;
-  return (
-    <div>
-      <div className="relative">
-        {children(id, error ? errorId : undefined)}
-        {prefix ? (
-          <span className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 font-mono text-sm text-fg-muted">
-            {prefix}
-          </span>
-        ) : null}
-        <label
-          htmlFor={id}
-          className={cn(
-            // Floated is the default; it only drops to centre while the
-            // field is both empty AND unfocused. Expressing it the other way
-            // round leaves two equal-specificity rules fighting, and CSS order
-            // decides — so focusing an empty field would not lift the label.
-            "t-label pointer-events-none absolute top-2 left-4 text-fg-muted",
-            "transition-all duration-[--dur-micro]",
-            "peer-placeholder-shown:peer-not-focus:top-1/2",
-            "peer-placeholder-shown:peer-not-focus:-translate-y-1/2",
-            "peer-focus:text-accent-ink",
-          )}
-        >
-          {label}
-        </label>
-      </div>
-      {error ? (
-        <p id={errorId} role="alert" className="t-label mt-2 text-accent-deep">
-          {error}
-        </p>
-      ) : null}
-    </div>
-  );
-}
-
-function StateSelect({
-  registration,
-  error,
-}: {
-  registration: UseFormRegisterReturn;
-  error?: string;
-}) {
-  return (
-    <div>
-      <label htmlFor="state" className="t-label mb-2 block text-fg-muted">
-        State / union territory
-      </label>
-      <select
-        id="state"
-        defaultValue=""
-        aria-describedby={error ? "state-error" : undefined}
-        aria-invalid={Boolean(error)}
-        {...registration}
-        className="h-14 w-full rounded-sm border border-line bg-bg px-4 font-mono text-sm text-fg outline-none transition-colors duration-[--dur-micro] focus:border-accent"
-      >
-        <option value="" disabled>
-          Select…
-        </option>
-        <optgroup label="States">
-          {INDIAN_STATES.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </optgroup>
-        <optgroup label="Union territories">
-          {UNION_TERRITORIES.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </optgroup>
-      </select>
-      {error ? (
-        <p id="state-error" role="alert" className="t-label mt-2 text-accent-deep">
-          {error}
-        </p>
-      ) : null}
-    </div>
-  );
-}
-
 function Steps({ active }: { active: Step }) {
   const steps: Step[] = ["contact", "shipping", "payment"];
   return (

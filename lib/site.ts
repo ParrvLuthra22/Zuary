@@ -17,6 +17,9 @@ export const SITE_DESCRIPTION =
  */
 export const OG_FALLBACK = "/og.webp";
 
+/** Where returns and order queries go. Referenced by the footer and /account. */
+export const SUPPORT_EMAIL = "hello@zuary.in";
+
 import type { Metadata } from "next";
 
 type PageMeta = {

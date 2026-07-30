@@ -2,13 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { auth } from "@/auth";
 import { BuyBox } from "@/components/commerce/BuyBox";
 import { ComingSoonCard } from "@/components/commerce/ComingSoonCard";
 import { NotifyButton } from "@/components/commerce/NotifyButton";
 import { ProductCard } from "@/components/commerce/ProductCard";
 import { ProductGallery } from "@/components/commerce/ProductGallery";
+import { WishlistButton } from "@/components/commerce/WishlistButton";
 import { TriangleA } from "@/components/layout/Wordmark";
-import { getVariantStock } from "@/lib/db/queries";
+import { getVariantStock, listWishlistSlugs } from "@/lib/db/queries";
 import { JsonLd, productSchema } from "@/lib/schema";
 import { pageMetadata } from "@/lib/site";
 import {
@@ -61,6 +63,21 @@ export default async function ProductPage({ params }: Params) {
   // rather than sold out, so the page still works without one.
   const stock = await getVariantStock(slug);
 
+  /* Wishlist state for every heart on this page — this product's and the two
+     sibling cards'. Fetched once as a list rather than per card, so a sibling
+     the customer has already saved shows filled instead of empty. Never allowed
+     to break the PDP: a failure here just renders the hearts unsaved. */
+  const session = await auth();
+  let savedSlugs: string[] = [];
+  if (session?.user?.id) {
+    try {
+      savedSlugs = await listWishlistSlugs(session.user.id);
+    } catch (error) {
+      console.error("[pdp] wishlist", error);
+    }
+  }
+  const signedIn = Boolean(session?.user);
+
   const others = PRODUCTS.filter((p) => p.slug !== product.slug);
 
   return (
@@ -74,6 +91,13 @@ export default async function ProductPage({ params }: Params) {
 
         <div className="md:sticky md:top-28 md:w-[42%] md:self-start">
           <BuyBox product={product} stock={stock} />
+          <div className="px-6 pb-8 md:px-10">
+            <WishlistButton
+              slug={product.slug}
+              saved={savedSlugs.includes(product.slug)}
+              signedIn={signedIn}
+            />
+          </div>
         </div>
       </article>
 
@@ -88,7 +112,13 @@ export default async function ProductPage({ params }: Params) {
           {others.map((other) => (
             <li key={other.slug}>
               {other.status === "available" ? (
-                <ProductCard product={other} />
+                <ProductCard
+                  product={other}
+                  wishlist={{
+                    signedIn,
+                    saved: savedSlugs.includes(other.slug),
+                  }}
+                />
               ) : (
                 <ComingSoonCard product={other} />
               )}

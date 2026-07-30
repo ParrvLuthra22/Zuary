@@ -37,7 +37,14 @@ const PILL =
 const parseList = (raw: string | null) =>
   raw ? raw.split(",").filter(Boolean) : [];
 
-export function ShopBrowser({ products }: { products: Product[] }) {
+export function ShopBrowser({
+  products,
+  wishlist,
+}: {
+  products: Product[];
+  /** Resolved on the server by the shop page; see WishlistButton. */
+  wishlist?: { signedIn: boolean; savedSlugs: string[] };
+}) {
   const router = useRouter();
   const params = useSearchParams();
 
@@ -263,7 +270,18 @@ export function ShopBrowser({ products }: { products: Product[] }) {
                 }}
               >
                 {product.status === "available" ? (
-                  <ProductCard product={product} priority={i === 0} />
+                  <ProductCard
+                    product={product}
+                    priority={i === 0}
+                    wishlist={
+                      wishlist
+                        ? {
+                            signedIn: wishlist.signedIn,
+                            saved: wishlist.savedSlugs.includes(product.slug),
+                          }
+                        : undefined
+                    }
+                  />
                 ) : (
                   <ComingSoonCard product={product} />
                 )}

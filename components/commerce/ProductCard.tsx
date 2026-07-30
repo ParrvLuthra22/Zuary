@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { WishlistButton } from "@/components/commerce/WishlistButton";
 import { SIZES, type Product, type Size } from "@/lib/data/products";
 import { cn, formatINR, seriesLabel } from "@/lib/utils";
 import { useCartStore } from "@/stores/cart";
@@ -13,6 +14,12 @@ type ProductCardProps = {
   product: Product;
   priority?: boolean;
   className?: string;
+  /**
+   * Resolved on the server by whichever page renders the grid. Left off where
+   * a wishlist makes no sense (the parked lookbook), and the heart is then
+   * simply absent rather than rendered in a guessed state.
+   */
+  wishlist?: { signedIn: boolean; saved: boolean };
 };
 
 /** Matches the shop grid: 1 col, 2 from sm, 3 from lg. */
@@ -22,6 +29,7 @@ export function ProductCard({
   product,
   priority,
   className,
+  wishlist,
 }: ProductCardProps) {
   const add = useCartStore((s) => s.add);
   const [primaryFailed, setPrimaryFailed] = useState(false);
@@ -88,6 +96,18 @@ export function ProductCard({
                 "radial-gradient(ellipse at center, transparent 0%, var(--bg) 100%)",
               opacity: 0.18,
             }}
+          />
+        ) : null}
+
+        {/* z-20 puts it above the stretched card link at z-10, so the heart is
+            clickable without navigating. */}
+        {wishlist ? (
+          <WishlistButton
+            slug={product.slug}
+            saved={wishlist.saved}
+            signedIn={wishlist.signedIn}
+            label={false}
+            className="absolute top-3 right-3 z-20 rounded-sm bg-bg-deep/70 p-2 backdrop-blur-sm"
           />
         ) : null}
 

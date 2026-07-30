@@ -2,11 +2,14 @@ import type { Metadata } from "next";
 import ReactDOM from "react-dom";
 import { Suspense } from "react";
 
+import { auth } from "@/auth";
+
 import { NewsletterForm } from "@/components/commerce/NewsletterForm";
 import { ShopBrowser } from "@/components/commerce/ShopBrowser";
 import { RevealText } from "@/components/motion/RevealText";
 import { Marquee } from "@/components/sections/Marquee";
 import { PRODUCTS, availableProducts } from "@/lib/data/products";
+import { listWishlistSlugs } from "@/lib/db/queries";
 import { pageMetadata } from "@/lib/site";
 
 export const metadata: Metadata = pageMetadata({
@@ -23,7 +26,7 @@ const DEVICE_WIDTHS = [640, 750, 828, 1080, 1200, 1920, 2048, 3840];
 const optimized = (src: string, width: number) =>
   `/_next/image?url=${encodeURIComponent(src)}&w=${width}&q=75`;
 
-export default function ShopPage() {
+export default async function ShopPage() {
   /*
    * ShopBrowser reads search params, so Next renders the whole grid on the
    * client and the Suspense fallback is all that reaches the HTML. That means
@@ -35,6 +38,18 @@ export default function ShopPage() {
    * and srcset the client will ask for, so it is a cache hit rather than a
    * second download.
    */
+  /* Wishlist state for the hearts. A failure here must not take the shop down —
+     the grid renders without hearts rather than not at all. */
+  const session = await auth();
+  let savedSlugs: string[] = [];
+  if (session?.user?.id) {
+    try {
+      savedSlugs = await listWishlistSlugs(session.user.id);
+    } catch (error) {
+      console.error("[shop] wishlist", error);
+    }
+  }
+
   const lcp = availableProducts()[0]?.images[0];
   if (lcp) {
     ReactDOM.preload(optimized(lcp, 1080), {
@@ -64,7 +79,10 @@ export default function ShopPage() {
       <h2 className="sr-only">Trousers</h2>
 
       <Suspense fallback={<div className="min-h-[60vh]" />}>
-        <ShopBrowser products={PRODUCTS} />
+        <ShopBrowser
+          products={PRODUCTS}
+          wishlist={{ signedIn: Boolean(session?.user), savedSlugs }}
+        />
       </Suspense>
 
       <Marquee

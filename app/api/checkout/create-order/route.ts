@@ -1,6 +1,7 @@
 import { eq, inArray } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
+import { auth } from "@/auth";
 import { checkoutSchema } from "@/lib/checkout";
 import { shippingFor } from "@/lib/data/policies";
 import { db } from "@/lib/db";
@@ -103,10 +104,21 @@ export async function POST(request: Request) {
     const shippingInr = shippingFor(subtotalInr);
     const totalInr = subtotalInr + shippingInr;
 
+    /*
+     * Attribute the order to the signed-in account, if there is one.
+     *
+     * Read from the session, never from the request body — a userId a client
+     * could send is a userId a client could change, and this column is what
+     * /account/orders filters on. Null means guest, which the column allows.
+     */
+    const session = await auth();
+    const userId = session?.user?.id ?? null;
+
     // Our row first, so the Razorpay receipt can carry our id.
     const [order] = await db
       .insert(orders)
       .values({
+        userId,
         status: "created",
         email: contact.email,
         phone: contact.phone,

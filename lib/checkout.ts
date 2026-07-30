@@ -32,6 +32,26 @@ export const addressSchema = z.object({
   country: z.string().min(2),
 });
 
+/**
+ * A saved address in the account, derived from the checkout rules above rather
+ * than restated.
+ *
+ * Every shared constraint — the six-digit PIN, the ten-digit mobile, the
+ * 36-entry region list — comes from one place, so a rule can never be tightened
+ * at checkout and left loose in the account. The shape differs because the
+ * table does: it carries a label and its own phone, and has no landmark column.
+ */
+export const savedAddressSchema = addressSchema
+  .omit({ name: true, country: true, landmark: true })
+  .extend({
+    label: z.string().max(40).optional().or(z.literal("")),
+    fullName: addressSchema.shape.name,
+    phone: contactSchema.shape.phone,
+    isDefault: z.boolean().optional(),
+  });
+
+export type SavedAddressInput = z.infer<typeof savedAddressSchema>;
+
 export const checkoutSchema = z.object({
   contact: contactSchema,
   address: addressSchema,

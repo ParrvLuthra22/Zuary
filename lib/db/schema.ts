@@ -68,6 +68,8 @@ export const orders = pgTable("orders", {
   totalInr: integer("total_inr").notNull(),
   razorpayOrderId: text("razorpay_order_id").unique(),
   razorpayPaymentId: text("razorpay_payment_id"),
+  /** Courier reference. Null until the order is actually handed over. */
+  trackingNumber: text("tracking_number"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -127,6 +129,13 @@ export const users = pgTable("users", {
   /* Authorisation lives here, not in the token. The JWT carries a copy for
      cheap reads, but this column is the source of truth — see auth.ts. */
   role: text("role").$type<UserRole>().notNull().default("customer"),
+  /**
+   * Lets this account see an upcoming drop before it opens. Set by hand in the
+   * database for now; the admin toggle arrives with B07. Separate from `role`
+   * on purpose — early access is a customer perk, not a privilege escalation,
+   * and conflating the two would mean granting it implies admin rights.
+   */
+  earlyAccess: boolean("early_access").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
