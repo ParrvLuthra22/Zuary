@@ -1,6 +1,5 @@
 import type { NextAuthConfig } from "next-auth";
 import Google from "next-auth/providers/google";
-import Resend from "next-auth/providers/resend";
 
 /**
  * The half of the auth config that can run on the edge.
@@ -15,6 +14,12 @@ import Resend from "next-auth/providers/resend";
  * The `session` callback has to be here rather than in auth.ts alone: it is
  * what puts id and role on the session object, and middleware reads
  * `req.auth.user.role` to gate /admin.
+ *
+ * The Resend provider is deliberately NOT here. Auth.js validates the whole
+ * config on every request, and an email provider without an adapter fails that
+ * validation with MissingAdapter — which aborts the request before the session
+ * is read, so `req.auth` comes back null and every gated route behaves as if
+ * nobody is signed in. It is added in auth.ts, alongside the adapter it needs.
  */
 export default {
   session: {
@@ -46,13 +51,6 @@ export default {
      * this flag.
      */
     Google({ allowDangerousEmailAccountLinking: true }),
-    /*
-     * No linking flag on this one — it is not a valid option for an email
-     * provider and does not need to be. A magic link proves the address by
-     * construction, so Auth.js already resolves it to the existing user with
-     * that email. The Google flag above is what makes the pair interchangeable.
-     */
-    Resend({ from: process.env.EMAIL_FROM }),
   ],
 
   callbacks: {

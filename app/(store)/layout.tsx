@@ -1,7 +1,7 @@
 import { CartSheet } from "@/components/commerce/CartSheet";
 import { NotifyDrawer } from "@/components/commerce/NotifyDrawer";
 import { Footer } from "@/components/layout/Footer";
-import { Nav } from "@/components/layout/Nav";
+import { NavBar } from "@/components/layout/NavBar";
 
 /* SmoothScroll, ScrollTriggerProvider, PageTransition and TrouserCursor are
    mounted once in the root layout — mounting them here too would give Lenis
@@ -14,7 +14,7 @@ export default function StoreLayout({
 }) {
   return (
     <>
-      <Nav />
+      <NavBar />
       <div className="min-h-screen pt-24 md:pt-28">{children}</div>
       <Footer />
       <CartSheet />

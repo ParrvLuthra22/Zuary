@@ -16,15 +16,22 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { Skeleton } from "@/components/ui/skeleton";
 import { shippingFor } from "@/lib/data/policies";
 import { formatINR } from "@/lib/utils";
-import { cartCount, cartSubtotal, useCartStore } from "@/stores/cart";
+import {
+  cartCount,
+  cartSubtotal,
+  useCartHydrated,
+  useCartStore,
+} from "@/stores/cart";
 import { useUIStore } from "@/stores/ui";
 
 export function CartSheet() {
   const open = useUIStore((s) => s.cartOpen);
   const setCartOpen = useUIStore((s) => s.setCartOpen);
   const items = useCartStore((s) => s.items);
+  const hydrated = useCartHydrated();
 
   // Re-checked on open and on every quantity change.
   const { validation, corrected, lineFor } = useCartValidation(items, open);
@@ -49,7 +56,23 @@ export function CartSheet() {
           </SheetTitle>
         </SheetHeader>
 
-        {items.length === 0 ? (
+        {/* Same rule as the cart page: no empty state until storage has been
+            read, or opening the sheet straight after a page load claims the bag
+            is empty when it is not. */}
+        {!hydrated ? (
+          <div aria-busy="true" className="flex-1 space-y-5 px-6 py-6">
+            <span className="sr-only">Loading your bag…</span>
+            {[0, 1].map((line) => (
+              <div key={line} className="flex gap-4">
+                <Skeleton className="h-30 w-24 shrink-0 rounded-sm" />
+                <div className="flex-1 space-y-3">
+                  <Skeleton className="h-3 w-24 rounded-sm" />
+                  <Skeleton className="h-3 w-16 rounded-sm" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : items.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-5 px-6">
             <TriangleA className="text-4xl" />
             <p className="t-display-sm">Your bag is empty.</p>

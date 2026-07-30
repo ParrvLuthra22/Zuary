@@ -23,7 +23,7 @@ export const TEAM: TeamMember[] = [
     focus: "Costing, margins, and the numbers behind each run.",
   },
   {
-    name: "Sudhan",
+    name: "Vidhan",
     role: "Design & Sales",
     focus: "Blocks, fits, and the shop floor.",
   },

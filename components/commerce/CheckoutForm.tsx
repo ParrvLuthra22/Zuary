@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Script from "next/script";
 import { useState } from "react";
@@ -10,17 +11,106 @@ import { toast } from "sonner";
 
 import { ProductThumb } from "@/components/commerce/ProductThumb";
 import { useCartValidation } from "@/components/commerce/useCartValidation";
+import { TriangleA } from "@/components/layout/Wordmark";
 import { ButtonZ } from "@/components/ui/button-z";
+import { Skeleton } from "@/components/ui/skeleton";
 import { checkoutFormSchema, type CheckoutFormInput } from "@/lib/checkout";
 import { shippingFor } from "@/lib/data/policies";
 import { INDIAN_STATES, UNION_TERRITORIES } from "@/lib/data/states";
 import { cn, formatINR } from "@/lib/utils";
-import { cartLines, cartSubtotal, useCartStore } from "@/stores/cart";
+import {
+  cartLines,
+  cartSubtotal,
+  useCartHydrated,
+  useCartStore,
+} from "@/stores/cart";
 import type { RazorpayCheckoutResponse } from "@/types/razorpay";
 
 type Step = "contact" | "shipping" | "payment";
 
+/**
+ * Hydration gate.
+ *
+ * The inner form is mounted only once the persisted cart has been read back.
+ * That is not cosmetic: returning from a Google redirect is a full page load,
+ * so on first paint `items` is the empty initial value. Rendering the form
+ * against it would flash a ₹0 summary, fire a cart validation request for an
+ * empty cart, and let a fast customer submit into "Your bag is empty" with a
+ * bag that is not in fact empty.
+ *
+ * Mounting conditionally rather than branching inside the form is deliberate —
+ * it keeps useCartValidation from running at all until there is a real cart.
+ */
 export function CheckoutForm() {
+  const hydrated = useCartHydrated();
+  const items = useCartStore((s) => s.items);
+
+  if (!hydrated) return <CheckoutSkeleton />;
+
+  // Only trustworthy after hydration. Never turn this into a redirect: the
+  // customer may have arrived here mid-flow and a bounce would lose the page.
+  if (items.length === 0) return <CheckoutEmpty />;
+
+  return <CheckoutFormInner />;
+}
+
+function CheckoutSkeleton() {
+  return (
+    <div
+      aria-busy="true"
+      aria-live="polite"
+      className="grid gap-12 lg:grid-cols-[1fr_380px]"
+    >
+      <span className="sr-only">Loading your bag…</span>
+
+      <div className="space-y-8">
+        {[0, 1].map((block) => (
+          <div key={block} className="space-y-4">
+            <Skeleton className="h-3 w-24 rounded-sm" />
+            <Skeleton className="h-12 w-full rounded-sm" />
+            <Skeleton className="h-12 w-full rounded-sm" />
+            <Skeleton className="h-12 w-2/3 rounded-sm" />
+          </div>
+        ))}
+      </div>
+
+      <aside className="h-fit rounded-sm border border-line bg-bg-raised p-6">
+        <Skeleton className="h-3 w-28 rounded-sm" />
+        <div className="mt-6 space-y-4">
+          {[0, 1].map((line) => (
+            <div key={line} className="flex gap-3">
+              <Skeleton className="h-18 w-14 shrink-0 rounded-sm" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-3 w-24 rounded-sm" />
+                <Skeleton className="h-3 w-16 rounded-sm" />
+              </div>
+            </div>
+          ))}
+        </div>
+        <Skeleton className="mt-8 h-px w-full" />
+        <Skeleton className="mt-6 h-6 w-32 rounded-sm" />
+      </aside>
+    </div>
+  );
+}
+
+function CheckoutEmpty() {
+  return (
+    <div className="flex flex-col items-start gap-5 py-16">
+      <TriangleA className="text-4xl" />
+      <p className="t-display-sm">Your bag is empty.</p>
+      <p className="max-w-sm text-sm text-fg-muted">
+        Nothing to check out. Anything you had saved is still here — this only
+        looks empty because the bag really is.
+      </p>
+      <ButtonZ asChild variant="outline">
+        <Link href="/shop">Shop trousers</Link>
+      </ButtonZ>
+    </div>
+  );
+}
+
+function CheckoutFormInner() {
   const router = useRouter();
   const items = useCartStore((s) => s.items);
   const clear = useCartStore((s) => s.clear);

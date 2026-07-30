@@ -18,7 +18,15 @@ const MAX_QTY_PER_LINE = 5;
 
 type CartState = {
   items: CartItem[];
-  /** False until the persisted cart has been read back from storage. */
+  /**
+   * False until the persisted cart has been read back from storage.
+   *
+   * Nothing may render cart contents, and above all nothing may redirect or
+   * clear based on the cart, before this is true. On the first paint after any
+   * full page load — which is exactly what returning from a Google redirect
+   * is — `items` is still the empty initial value. Acting on it there is how a
+   * customer comes back from signing in to an empty bag.
+   */
   hydrated: boolean;
   add: (slug: ProductSlug, size: Size, qty?: number) => void;
   remove: (slug: ProductSlug, size: Size) => void;
@@ -116,8 +124,29 @@ export const useCartStore = create<CartState>()(
       name: "zuary-cart",
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({ items: state.items }),
-      onRehydrateStorage: () => (state) => {
-        state?.reconcile();
+      /*
+       * Runs once, after the persisted cart has been read back — including when
+       * there was nothing to read. Everything that renders from the cart waits
+       * on the flag this sets.
+       *
+       * The error branch matters more than it looks. If storage is unreadable
+       * (private mode, a corrupt value, a quota error) the callback still fires,
+       * just with an error and no state. Leaving `hydrated` false there would
+       * strand every cart surface on its skeleton forever, so it is flipped
+       * regardless: an empty cart we can render is better than a page that
+       * never resolves.
+       */
+      onRehydrateStorage: () => (state, error) => {
+        if (error) {
+          console.error("[cart] rehydrate failed", error);
+          useCartStore.setState({ hydrated: true });
+          return;
+        }
+        if (state) {
+          state.reconcile();
+          return;
+        }
+        useCartStore.setState({ hydrated: true });
       },
     },
   ),
@@ -144,3 +173,10 @@ export const cartLines = (items: CartItem[]) =>
 
 export const useCartCount = () => useCartStore((s) => cartCount(s.items));
 export const useCartSubtotal = () => useCartStore((s) => cartSubtotal(s.items));
+
+/**
+ * Gate for anything that reads the cart. Server-rendered markup and the first
+ * client paint both see false, so a component that respects this cannot
+ * produce a hydration mismatch either.
+ */
+export const useCartHydrated = () => useCartStore((s) => s.hydrated);

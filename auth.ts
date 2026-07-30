@@ -2,6 +2,7 @@ import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { eq, sql } from "drizzle-orm";
 import NextAuth from "next-auth";
 import type { Adapter } from "next-auth/adapters";
+import Resend from "next-auth/providers/resend";
 
 import authConfig from "./auth.config";
 import { db, getDb } from "@/lib/db";
@@ -73,44 +74,108 @@ async function roleFor(userId: string): Promise<UserRole> {
 }
 
 /**
- * The adapter, built on first use rather than at import.
+ * Every method @auth/drizzle-adapter's pg implementation exposes.
  *
- * DrizzleAdapter has to be handed the real client — it selects its dialect with
+ * Hard-coded on purpose. Auth.js decides what a deployment can do by probing
+ * the adapter — `"createSession" in adapter`, and a filter over its keys — and
+ * it does that on requests that have nothing to do with the database, including
+ * every `auth()` call. Answering those probes from this list is what keeps a
+ * session read off the database entirely.
+ *
+ * If the adapter package gains or loses a method this list has to move with it.
+ * The assertion in `resolve` is what makes a drift loud instead of silent.
+ */
+const ADAPTER_METHODS = [
+  "createUser",
+  "getUser",
+  "getUserByEmail",
+  "getUserByAccount",
+  "updateUser",
+  "deleteUser",
+  "linkAccount",
+  "unlinkAccount",
+  "getAccount",
+  "createSession",
+  "getSessionAndUser",
+  "updateSession",
+  "deleteSession",
+  "createVerificationToken",
+  "useVerificationToken",
+  "createAuthenticator",
+  "getAuthenticator",
+  "listAuthenticatorsByUserId",
+  "updateAuthenticatorCounter",
+] as const satisfies readonly (keyof Adapter)[];
+
+const ADAPTER_METHOD_SET = new Set<string | symbol>(ADAPTER_METHODS);
+
+/**
+ * The adapter, built on first actual use.
+ *
+ * DrizzleAdapter must be handed the real client — it picks its dialect with
  * drizzle's `is()`, which fails against the lazy proxy `db` exports. But
- * building the client eagerly needs DATABASE_URL at module load, which breaks
- * `next build` on any machine without one, and this module is imported by every
- * page that calls auth().
+ * building the client eagerly needs DATABASE_URL at module load, and this module
+ * is imported by every page that calls auth(), so `next build` would need a
+ * database to compile.
  *
- * So the construction is deferred to the first adapter method Auth.js actually
- * calls. `has` is trapped as well as `get` because Auth.js feature-detects the
- * optional methods before using them.
+ * So `get` hands back a thunk rather than the real method: construction is
+ * deferred all the way to the moment an adapter operation is actually invoked.
  */
 function lazyDrizzleAdapter(): Adapter {
   let real: Adapter | undefined;
+
   const resolve = () => {
-    real ??= DrizzleAdapter(getDb(), {
-      usersTable: users,
-      accountsTable: accounts,
-      sessionsTable: sessions,
-      verificationTokensTable: verificationTokens,
-    });
+    if (!real) {
+      real = DrizzleAdapter(getDb(), {
+        usersTable: users,
+        accountsTable: accounts,
+        sessionsTable: sessions,
+        verificationTokensTable: verificationTokens,
+      });
+      const missing = ADAPTER_METHODS.filter((name) => !(name in real!));
+      if (missing.length) {
+        throw new Error(
+          `[auth] ADAPTER_METHODS is out of date with @auth/drizzle-adapter; it does not implement: ${missing.join(", ")}`,
+        );
+      }
+    }
     return real;
   };
 
   return new Proxy({} as Adapter, {
-    get: (_target, prop, receiver) => Reflect.get(resolve(), prop, receiver),
-    has: (_target, prop) => Reflect.has(resolve(), prop),
-    ownKeys: () => Reflect.ownKeys(resolve()),
-    getOwnPropertyDescriptor: (_target, prop) => {
-      const descriptor = Reflect.getOwnPropertyDescriptor(resolve(), prop);
-      // ownKeys must agree with this trap or the proxy invariant throws.
-      return descriptor && { ...descriptor, configurable: true };
+    get(_target, prop) {
+      if (!ADAPTER_METHOD_SET.has(prop)) return undefined;
+      return (...args: unknown[]) => {
+        const method = resolve()[prop as keyof Adapter] as (
+          ...a: unknown[]
+        ) => unknown;
+        return method.call(resolve(), ...args);
+      };
     },
+    has: (_target, prop) => ADAPTER_METHOD_SET.has(prop),
+    ownKeys: () => [...ADAPTER_METHODS],
+    getOwnPropertyDescriptor: (_target, prop) =>
+      ADAPTER_METHOD_SET.has(prop)
+        ? { configurable: true, enumerable: true, writable: false }
+        : undefined,
   });
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
+
+  /*
+   * Google comes from the shared config; the magic link is added only here.
+   * An email provider requires an adapter, and Auth.js enforces that when it
+   * validates the config — so it can exist only in the instance that has one.
+   * Putting it in auth.config.ts breaks middleware for every route.
+   *
+   * No linking flag on it: that option is not valid for an email provider and
+   * is not needed. A magic link proves the address by construction, so Auth.js
+   * already resolves it to the existing user with that email. The Google flag
+   * is what makes the pair interchangeable.
+   */
+  providers: [...authConfig.providers, Resend({ from: process.env.EMAIL_FROM })],
 
   adapter: lazyDrizzleAdapter(),
 

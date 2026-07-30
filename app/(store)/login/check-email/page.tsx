@@ -1,35 +1,61 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { z } from "zod";
 
 import { TriangleA } from "@/components/layout/Wordmark";
-import { ButtonZ } from "@/components/ui/button-z";
 import { pageMetadata } from "@/lib/site";
 
 export const metadata: Metadata = pageMetadata({
-  title: "Check your email",
+  title: "Check your inbox",
   description: "A sign-in link is on its way.",
   path: "/login/check-email",
   noIndex: true,
 });
 
-/** Auth.js `verifyRequest` page — where the magic-link flow lands. */
-export default function CheckEmailPage() {
+/**
+ * The address comes back through the query string, so it is validated before it
+ * is shown. React escapes it either way, but an unvalidated value would let
+ * anyone put arbitrary text into a page that looks like it is talking about
+ * their account — so anything that is not an email is dropped and the copy
+ * falls back to the generic wording.
+ */
+const emailSchema = z.string().email().max(254);
+
+export default async function CheckEmailPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ email?: string }>;
+}) {
+  const { email } = await searchParams;
+  const parsed = emailSchema.safeParse(email);
+  const address = parsed.success ? parsed.data : null;
+
   return (
-    <main className="mx-auto flex min-h-[70vh] w-full max-w-md flex-col items-center justify-center gap-6 px-6 py-24 text-center">
+    <main className="mx-auto flex min-h-[80vh] w-full max-w-sm flex-col justify-center px-6 py-20">
       <span style={{ fontSize: "48px" }}>
         <TriangleA />
       </span>
 
-      <h1 className="t-display-md">Check your email.</h1>
+      <h1 className="t-display-sm mt-8">Check your inbox.</h1>
 
-      <p className="text-sm leading-relaxed text-fg-muted">
-        We&rsquo;ve sent you a sign-in link. It is good for one use and expires in
-        24 hours. If it does not arrive in a minute, check spam.
+      <p className="mt-4 leading-relaxed text-fg-muted">
+        {address ? (
+          <>
+            We sent a sign-in link to{" "}
+            <span className="font-mono text-fg break-all">{address}</span>. It
+            expires in 24 hours.
+          </>
+        ) : (
+          <>We sent you a sign-in link. It expires in 24 hours.</>
+        )}
       </p>
 
-      <ButtonZ asChild variant="outline">
-        <Link href="/login">Use a different address</Link>
-      </ButtonZ>
+      <Link
+        href="/login"
+        className="t-label mt-10 self-start text-accent-ink underline-offset-4 hover:underline"
+      >
+        Wrong address? Start again →
+      </Link>
     </main>
   );
 }

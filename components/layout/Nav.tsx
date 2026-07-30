@@ -7,6 +7,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
+import { AccountMenu, type NavAccount } from "@/components/layout/AccountMenu";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { Wordmark } from "@/components/layout/Wordmark";
 import { useLenis } from "@/components/motion/SmoothScroll";
@@ -36,7 +37,7 @@ const HIDE_AFTER = 400;
 const SOLID_AFTER = 40;
 const PER_CHAR_MS = 26;
 
-export function Nav() {
+export function Nav({ account }: { account: NavAccount | null }) {
   const pathname = usePathname();
   const lenis = useLenis();
   const count = useCartCount();
@@ -127,6 +128,8 @@ export function Nav() {
             </button>
 
             <ThemeToggle />
+
+            <AccountMenu account={account} />
 
             <button
               type="button"

@@ -1,7 +1,7 @@
 import { CartSheet } from "@/components/commerce/CartSheet";
 import { NotifyDrawer } from "@/components/commerce/NotifyDrawer";
 import { Footer } from "@/components/layout/Footer";
-import { Nav } from "@/components/layout/Nav";
+import { NavBar } from "@/components/layout/NavBar";
 
 /**
  * Nav and Footer as everywhere else, but no top padding: the cinematic group's
@@ -18,7 +18,7 @@ export default function CinematicLayout({
 }) {
   return (
     <>
-      <Nav />
+      <NavBar />
       <div className="bg-bg-deep">{children}</div>
       <Footer />
       <CartSheet />

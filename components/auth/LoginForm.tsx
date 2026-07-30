@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Phone } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -8,7 +9,7 @@ import { z } from "zod";
 
 import { ButtonZ } from "@/components/ui/button-z";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 
 const schema = z.object({
   email: z.string().email("That email does not look right."),
@@ -16,25 +17,26 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-/** Auth.js error codes we can say something useful about. */
+/** The Auth.js codes worth saying something specific about. */
 const ERROR_COPY: Record<string, string> = {
   OAuthAccountNotLinked:
-    "That address is already registered with a different sign-in method. Use the one you signed up with.",
-  AccessDenied: "That sign-in was declined.",
-  Verification: "That link has expired or was already used. Request a new one.",
-  Configuration:
-    "Sign-in is not configured yet. If you are seeing this in production, tell us.",
+    "That email is already registered with a different sign-in method. Try the magic link instead.",
+  Verification: "That link expired or was already used. Request a new one.",
 };
+
+const GENERIC = "Something went wrong signing you in. Try again.";
 
 export function LoginForm({
   next,
   initialError,
+  phoneEnabled,
 }: {
   next: string;
   initialError?: string;
+  phoneEnabled: boolean;
 }) {
   const [failure, setFailure] = useState(
-    initialError ? (ERROR_COPY[initialError] ?? "Sign-in failed. Try again.") : "",
+    initialError ? (ERROR_COPY[initialError] ?? GENERIC) : "",
   );
   const [googlePending, setGooglePending] = useState(false);
 
@@ -50,44 +52,76 @@ export function LoginForm({
   async function onEmail(values: FormValues) {
     setFailure("");
     try {
-      // redirect: false so a transport failure surfaces here instead of
-      // bouncing to the generic error page.
+      // redirect:false so a send failure surfaces inline instead of bouncing to
+      // the generic error page.
       const result = await signIn("resend", {
         email: values.email,
         redirectTo: next,
         redirect: false,
       });
       if (result?.error) {
-        setFailure(ERROR_COPY[result.error] ?? "Could not send the link. Try again.");
+        setFailure(ERROR_COPY[result.error] ?? GENERIC);
         return;
       }
-      window.location.href = "/login/check-email";
+      // The address is carried across so check-email can name it. It is echoed
+      // back into copy, never into a link or a redirect.
+      window.location.href = `/login/check-email?email=${encodeURIComponent(values.email)}`;
     } catch {
-      setFailure("Could not send the link. Try again.");
+      setFailure("Could not send the link. Check your connection and try again.");
     }
   }
 
   return (
     <div className="mt-10">
-      <ButtonZ
+      {/*
+        Neutral, not accent. Google's brand guidelines require their mark to sit
+        on white or a neutral surface, so this is off-white with carbon text in
+        the dark theme and inverts on paper — the one button in the app that
+        deliberately does not use the hazard fill.
+      */}
+      <button
         type="button"
-        size="lg"
-        variant="outline"
         disabled={googlePending}
         onClick={() => {
           setGooglePending(true);
           void signIn("google", { redirectTo: next });
         }}
-        className="w-full"
+        className={cn(
+          "flex h-14 w-full items-center justify-center gap-3 rounded-sm",
+          "font-mono text-xs tracking-[0.18em] uppercase",
+          "bg-off-white text-carbon hover:bg-fog",
+          /* On paper, off-white is almost the page colour. Pure white plus a
+             hairline keeps the button readable as a button — and white is what
+             Google's guidelines ask for anyway. */
+          "light:border light:border-line light:bg-bg-deep light:hover:bg-off-white",
+          "transition-colors duration-[--dur-micro] ease-[--ease-out]",
+          "disabled:pointer-events-none disabled:opacity-50",
+        )}
       >
         <GoogleMark />
-        {googlePending ? "…" : "Continue with Google"}
-      </ButtonZ>
+        {googlePending ? "Redirecting…" : "Continue with Google"}
+      </button>
 
-      <div className="my-8 flex items-center gap-4">
-        <Separator className="flex-1 bg-line" />
+      {phoneEnabled ? (
+        <ButtonZ
+          type="button"
+          size="lg"
+          variant="outline"
+          className="mt-3 h-14 w-full"
+          asChild
+        >
+          <a href={`/login/phone?next=${encodeURIComponent(next)}`}>
+            <Phone className="size-4" />
+            Continue with phone
+          </a>
+        </ButtonZ>
+      ) : null}
+
+      {/* Hairline with the label sitting on it. */}
+      <div className="my-8 flex items-center gap-4" aria-hidden>
+        <span className="h-px flex-1 bg-line" />
         <span className="t-label text-fg-muted">or</span>
-        <Separator className="flex-1 bg-line" />
+        <span className="h-px flex-1 bg-line" />
       </div>
 
       <form onSubmit={handleSubmit(onEmail)} noValidate>
@@ -102,22 +136,31 @@ export function LoginForm({
           placeholder="you@example.com"
           aria-invalid={Boolean(errors.email)}
           aria-describedby={errors.email ? "login-email-error" : undefined}
-          className="mt-3 h-12 rounded-sm border-line bg-bg-raised font-mono text-sm"
+          className="mt-3 h-14 rounded-sm border-line bg-bg-raised font-mono text-sm"
         />
 
-        <ButtonZ type="submit" size="lg" disabled={isSubmitting} className="mt-4 w-full">
-          {isSubmitting ? "…" : "Email me a link"}
+        <ButtonZ
+          type="submit"
+          variant="outline"
+          disabled={isSubmitting}
+          className="mt-3 h-14 w-full"
+        >
+          {isSubmitting ? "Sending…" : "Send me a link"}
         </ButtonZ>
 
         {errors.email ? (
-          <p id="login-email-error" role="alert" className="t-label mt-3 text-accent-ink">
+          <p
+            id="login-email-error"
+            role="alert"
+            className="t-label mt-3 text-accent-ink"
+          >
             {errors.email.message}
           </p>
         ) : null}
       </form>
 
       {failure ? (
-        <p role="alert" className="t-label mt-6 text-fg-muted">
+        <p role="alert" className="t-label mt-6 leading-relaxed text-fg-muted">
           {failure}
         </p>
       ) : null}
@@ -125,10 +168,11 @@ export function LoginForm({
   );
 }
 
-/* Brand mark, inline — lucide v1 dropped these. */
+/* Inline — lucide v1 dropped brand marks, and this one has to stay full-colour
+   on the neutral button to satisfy Google's guidelines. */
 function GoogleMark() {
   return (
-    <svg viewBox="0 0 24 24" className="size-4" aria-hidden>
+    <svg viewBox="0 0 24 24" className="size-5 shrink-0" aria-hidden>
       <path
         fill="#4285F4"
         d="M23.06 12.25c0-.85-.08-1.67-.22-2.45H12v4.64h6.19a5.3 5.3 0 0 1-2.3 3.47v2.9h3.72c2.17-2 3.45-4.95 3.45-8.56Z"
