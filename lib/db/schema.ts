@@ -68,7 +68,13 @@ export const orders = pgTable("orders", {
   totalInr: integer("total_inr").notNull(),
   razorpayOrderId: text("razorpay_order_id").unique(),
   razorpayPaymentId: text("razorpay_payment_id"),
-  /** Courier reference (AWB). Null until the order is actually handed over. */
+  /**
+   * The AWB — the courier's own consignment number.
+   *
+   * Named trackingNumber because it predates the admin work; it is the same
+   * field the mark-shipped dialog calls "AWB". Not duplicated under a second
+   * name, because two columns holding one number is how they drift apart.
+   */
   trackingNumber: text("tracking_number"),
   /** Courier name, shown in the shipped email beside the AWB. */
   courier: text("courier"),
@@ -86,6 +92,9 @@ export const orders = pgTable("orders", {
   confirmationSentAt: timestamp("confirmation_sent_at", {
     withTimezone: true,
   }),
+  /** When it was handed to the courier. Distinct from updatedAt, which moves
+   *  for any reason. */
+  shippedAt: timestamp("shipped_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

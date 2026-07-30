@@ -4,6 +4,7 @@ import { OrderShipped } from "@/emails/OrderShipped";
 import type { OrderEmailLine } from "@/emails/OrderConfirmation";
 import { getProduct } from "@/lib/data/products";
 import { getOrderWithItems } from "@/lib/db/queries";
+import { shortOrderId } from "@/lib/order-number";
 import { formatINR } from "@/lib/utils";
 
 import { sendEmail } from "./send";
@@ -14,9 +15,7 @@ const DATE = new Intl.DateTimeFormat("en-IN", {
   year: "numeric",
 });
 
-/** Same short id the account pages and support use. */
-export const shortOrderId = (id: string) =>
-  id.replace(/-/g, "").slice(0, 8).toUpperCase();
+export { shortOrderId } from "@/lib/order-number";
 
 type OrderRow = NonNullable<Awaited<ReturnType<typeof getOrderWithItems>>>;
 

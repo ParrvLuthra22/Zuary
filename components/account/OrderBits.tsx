@@ -2,16 +2,8 @@ import { getProduct } from "@/lib/data/products";
 import type { OrderStatus } from "@/lib/db/schema";
 import { cn } from "@/lib/utils";
 
-/**
- * Order numbers.
- *
- * The id is a uuid, which is unusable out loud or in an email subject. The
- * first eight hex characters are what the customer and support both quote —
- * short enough to read, and with three orders a day it will not collide in the
- * lifetime of the shop. The full uuid stays the key everywhere internal.
- */
-export const orderNumber = (id: string) =>
-  id.replace(/-/g, "").slice(0, 8).toUpperCase();
+/** Re-exported so the account pages keep their local name for it. */
+export { shortOrderId as orderNumber } from "@/lib/order-number";
 
 export const ORDER_DATE = new Intl.DateTimeFormat("en-IN", {
   day: "numeric",
