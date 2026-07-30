@@ -5,8 +5,9 @@ import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Script from "next/script";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { signOut } from "next-auth/react";
 import { toast } from "sonner";
 
 import {
@@ -16,6 +17,10 @@ import {
   errorAt,
 } from "@/components/commerce/AddressFields";
 import { ProductThumb } from "@/components/commerce/ProductThumb";
+import {
+  NEW_ADDRESS,
+  SavedAddressPicker,
+} from "@/components/commerce/SavedAddressPicker";
 import { useCartValidation } from "@/components/commerce/useCartValidation";
 import { TriangleA } from "@/components/layout/Wordmark";
 import { ButtonZ } from "@/components/ui/button-z";
@@ -29,6 +34,7 @@ import {
   useCartHydrated,
   useCartStore,
 } from "@/stores/cart";
+import type { Address } from "@/lib/db/schema";
 import type { RazorpayCheckoutResponse } from "@/types/razorpay";
 
 type Step = "contact" | "shipping" | "payment";
@@ -46,7 +52,16 @@ type Step = "contact" | "shipping" | "payment";
  * Mounting conditionally rather than branching inside the form is deliberate —
  * it keeps useCartValidation from running at all until there is a real cart.
  */
-export function CheckoutForm() {
+export type CheckoutAccount = { email: string | null };
+
+export function CheckoutForm({
+  account,
+  savedAddresses,
+}: {
+  /** Null when the session has expired; see CheckoutSignIn. */
+  account: CheckoutAccount | null;
+  savedAddresses: Address[];
+}) {
   const hydrated = useCartHydrated();
   const items = useCartStore((s) => s.items);
 
@@ -56,7 +71,9 @@ export function CheckoutForm() {
   // customer may have arrived here mid-flow and a bounce would lose the page.
   if (items.length === 0) return <CheckoutEmpty />;
 
-  return <CheckoutFormInner />;
+  return (
+    <CheckoutFormInner account={account} savedAddresses={savedAddresses} />
+  );
 }
 
 function CheckoutSkeleton() {
@@ -115,7 +132,13 @@ function CheckoutEmpty() {
   );
 }
 
-function CheckoutFormInner() {
+function CheckoutFormInner({
+  account,
+  savedAddresses,
+}: {
+  account: CheckoutAccount | null;
+  savedAddresses: Address[];
+}) {
   const router = useRouter();
   const items = useCartStore((s) => s.items);
   const clear = useCartStore((s) => s.clear);
@@ -123,6 +146,17 @@ function CheckoutFormInner() {
   const [scriptReady, setScriptReady] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [step, setStep] = useState<Step>("contact");
+
+  const defaultAddress =
+    savedAddresses.find((a) => a.isDefault) ?? savedAddresses[0];
+  const [selectedAddressId, setSelectedAddressId] = useState<string>(
+    defaultAddress?.id ?? NEW_ADDRESS,
+  );
+  // Only offered when there is nothing saved yet — someone who already has
+  // addresses is not trying to build a collection at checkout.
+  const [saveAddress, setSaveAddress] = useState(savedAddresses.length === 0);
+
+  const usingNew = selectedAddressId === NEW_ADDRESS;
 
   const { validation } = useCartValidation(items, true);
 
@@ -134,12 +168,13 @@ function CheckoutFormInner() {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<CheckoutFormInput>({
     resolver: zodResolver(checkoutFormSchema),
     mode: "onBlur",
     defaultValues: {
-      contact: { email: "", phone: "" },
+      contact: { email: account?.email ?? "", phone: "" },
       address: {
         name: "",
         line1: "",
@@ -153,6 +188,36 @@ function CheckoutFormInner() {
       billingSameAsShipping: true,
     },
   });
+
+  /*
+   * Copies a saved address into the form.
+   *
+   * The submitted payload always comes from the form, whichever way it was
+   * filled — so the API keeps one shape and one validation path, and picking a
+   * card cannot smuggle an unvalidated address past the schema.
+   */
+  const applySaved = useCallback(
+    (address: Address | undefined) => {
+      if (!address) return;
+      setValue("address.name", address.fullName, { shouldValidate: true });
+      setValue("address.line1", address.line1, { shouldValidate: true });
+      setValue("address.line2", address.line2 ?? "");
+      setValue("address.city", address.city, { shouldValidate: true });
+      setValue("address.state", address.state as never, {
+        shouldValidate: true,
+      });
+      setValue("address.pincode", address.pincode, { shouldValidate: true });
+      if (address.phone) {
+        setValue("contact.phone", address.phone, { shouldValidate: true });
+      }
+    },
+    [setValue],
+  );
+
+  // Seed once from whichever card starts selected.
+  useEffect(() => {
+    if (defaultAddress) applySaved(defaultAddress);
+  }, [defaultAddress, applySaved]);
 
   async function onSubmit(values: CheckoutFormInput) {
     if (items.length === 0) {
@@ -174,6 +239,8 @@ function CheckoutFormInner() {
         // Only slug/size/qty. The server decides what it costs.
         body: JSON.stringify({
           ...values,
+          // Advisory. The server dedupes and decides.
+          saveAddress: usingNew && saveAddress,
           items: items.map((i) => ({
             slug: i.slug,
             size: i.size,
@@ -183,6 +250,13 @@ function CheckoutFormInner() {
       });
       const data = await res.json().catch(() => ({}));
 
+      if (res.status === 401) {
+        // Session died between page load and pay. Send them to sign in and
+        // come straight back; the cart is in localStorage and survives.
+        toast("Sign in to complete your order.");
+        router.push("/login?next=%2Fcheckout");
+        return;
+      }
       if (!res.ok) {
         toast(data.error ?? "Could not start checkout.");
         setStep("shipping");
@@ -267,19 +341,47 @@ function CheckoutFormInner() {
             onFocus={() => setStep("contact")}
           >
             <legend className="t-label mb-5 text-accent-ink">Contact</legend>
-            <Field label="Email" error={errors.contact?.email?.message}>
-              {(id, describedBy) => (
-                <input
-                  id={id}
-                  type="email"
-                  autoComplete="email"
-                  placeholder=" "
-                  aria-describedby={describedBy}
-                  {...register("contact.email")}
-                  className={FIELD}
-                />
-              )}
-            </Field>
+
+            {account?.email ? (
+              /* Signed in: the order is attached to this account, so the email
+                 is the account's and not a free-text field. Still registered so
+                 it reaches the API and the schema — just not editable. */
+              <div>
+                <p className="t-label text-fg-muted">Email</p>
+                <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+                  <span className="font-mono text-sm break-all text-fg">
+                    {account.email}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => void signOut({ redirectTo: "/login?next=%2Fcheckout" })}
+                    className="t-label shrink-0 text-fg-muted underline-offset-4 transition-colors hover:text-accent-ink hover:underline"
+                  >
+                    Not you? Sign out
+                  </button>
+                </div>
+                <input type="hidden" {...register("contact.email")} />
+                {errors.contact?.email?.message ? (
+                  <p role="alert" className="t-label mt-2 text-accent-deep">
+                    {errors.contact.email.message}
+                  </p>
+                ) : null}
+              </div>
+            ) : (
+              <Field label="Email" error={errors.contact?.email?.message}>
+                {(id, describedBy) => (
+                  <input
+                    id={id}
+                    type="email"
+                    autoComplete="email"
+                    placeholder=" "
+                    aria-describedby={describedBy}
+                    {...register("contact.email")}
+                    className={FIELD}
+                  />
+                )}
+              </Field>
+            )}
             <Field
               label="Phone"
               prefix="+91"
@@ -308,6 +410,34 @@ function CheckoutFormInner() {
 
             <input type="hidden" {...register("address.country")} />
 
+            {savedAddresses.length > 0 ? (
+              <div className="mb-8">
+                <SavedAddressPicker
+                  addresses={savedAddresses}
+                  selectedId={selectedAddressId}
+                  onSelect={(id) => {
+                    setSelectedAddressId(id);
+                    if (id === NEW_ADDRESS) {
+                      // Clear, so the revealed form is not pre-filled with the
+                      // previous card's values.
+                      setValue("address.name", "");
+                      setValue("address.line1", "");
+                      setValue("address.line2", "");
+                      setValue("address.city", "");
+                      setValue("address.state", "" as never);
+                      setValue("address.pincode", "");
+                    } else {
+                      applySaved(savedAddresses.find((a) => a.id === id));
+                    }
+                  }}
+                />
+              </div>
+            ) : null}
+
+            {/* The editable form is hidden while a saved card is selected, but
+                stays mounted: unmounting it would drop the registered fields
+                and the values applySaved just wrote into them. */}
+            <div className={usingNew ? "space-y-5" : "hidden"}>
             <Field label="Full name" error={errors.address?.name?.message}>
               {(id, describedBy) => (
                 <input
@@ -327,6 +457,21 @@ function CheckoutFormInner() {
               prefix="address."
               selectId="checkout-state"
             />
+
+            {savedAddresses.length === 0 ? (
+              <label className="flex cursor-pointer items-center gap-3 pt-2">
+                <input
+                  type="checkbox"
+                  checked={saveAddress}
+                  onChange={(event) => setSaveAddress(event.target.checked)}
+                  className="size-4 accent-[var(--accent)]"
+                />
+                <span className="t-label text-fg-muted">
+                  Save this address to my account
+                </span>
+              </label>
+            ) : null}
+            </div>
 
             <label className="flex cursor-pointer items-center gap-3 pt-2">
               <input
@@ -385,21 +530,35 @@ function CheckoutFormInner() {
             <p className="t-display-sm mt-1">{formatINR(total)}</p>
           </div>
 
-          <ButtonZ
-            type="submit"
-            size="lg"
-            disabled={submitting || lines.length === 0}
-            className="mt-6 w-full"
-          >
-            {submitting ? (
-              <>
-                <Loader2 className="size-4 animate-spin" />
-                Opening Razorpay
-              </>
-            ) : (
-              `Pay ${formatINR(total)}`
-            )}
-          </ButtonZ>
+          {/* With no session the API would answer 401, so the button says what
+              actually happens next instead of inviting a failed attempt. It
+              still submits nothing — it navigates. */}
+          {account ? (
+            <ButtonZ
+              type="submit"
+              size="lg"
+              disabled={submitting || lines.length === 0}
+              className="mt-6 w-full"
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Opening Razorpay
+                </>
+              ) : (
+                `Pay ${formatINR(total)}`
+              )}
+            </ButtonZ>
+          ) : (
+            <ButtonZ
+              type="button"
+              size="lg"
+              onClick={() => router.push("/login?next=%2Fcheckout")}
+              className="mt-6 w-full"
+            >
+              Sign in to pay {formatINR(total)}
+            </ButtonZ>
+          )}
 
           <p className="t-label mt-4 text-fg-muted">
             Card, UPI, netbanking. Handled by Razorpay.

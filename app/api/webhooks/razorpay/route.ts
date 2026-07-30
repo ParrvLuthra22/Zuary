@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { markOrderFailed, settleOrderPaid } from "@/lib/db/settle";
+import { sendOrderConfirmation } from "@/lib/email/order-confirmation";
 import { verifyWebhookSignature } from "@/lib/razorpay/verify";
 
 export const runtime = "nodejs";
@@ -50,6 +51,20 @@ export async function POST(request: Request) {
     switch (event.event) {
       case "payment.captured": {
         const result = await settleOrderPaid(razorpayOrderId, razorpayPaymentId);
+
+        /*
+         * The email is sent from here as well as from /checkout/verify, because
+         * either can be the one that settles: if the customer closes the tab
+         * after paying, verify never runs and this is the only path left.
+         *
+         * Guarded on alreadySettled so whichever arrives second sends nothing.
+         * That flag is set inside settleOrderPaid's transaction, so the two
+         * racing callers cannot both see false.
+         */
+        if (result.status === "paid" && !result.alreadySettled) {
+          await sendOrderConfirmation(result.orderId);
+        }
+
         return NextResponse.json({
           ok: true,
           status: result.status,

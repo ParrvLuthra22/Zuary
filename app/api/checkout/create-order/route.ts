@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { checkoutSchema } from "@/lib/checkout";
 import { shippingFor } from "@/lib/data/policies";
 import { db } from "@/lib/db";
+import { createAddress, listAddresses } from "@/lib/db/queries";
 import { orderItems, orders, products, variants } from "@/lib/db/schema";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { RAZORPAY_CURRENCY, razorpay, toPaise } from "@/lib/razorpay/client";
@@ -21,6 +22,23 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: "Too many attempts. Try again shortly." },
       { status: 429, headers: { "Retry-After": String(limit.retryAfterSec) } },
+    );
+  }
+
+  /*
+   * Payment requires an account.
+   *
+   * Checked before the body is even parsed, so an unauthenticated caller learns
+   * nothing about the shape of the request. Middleware already keeps signed-out
+   * visitors off /checkout, but this endpoint is reachable directly — a gate on
+   * the page is not a gate on the API.
+   */
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) {
+    return NextResponse.json(
+      { error: "Sign in to complete your order." },
+      { status: 401 },
     );
   }
 
@@ -42,7 +60,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const { contact, address, items } = parsed.data;
+  const { contact, address, items, saveAddress } = parsed.data;
 
   try {
     // Prices and stock come from the database. Nothing the browser sent about
@@ -104,16 +122,6 @@ export async function POST(request: Request) {
     const shippingInr = shippingFor(subtotalInr);
     const totalInr = subtotalInr + shippingInr;
 
-    /*
-     * Attribute the order to the signed-in account, if there is one.
-     *
-     * Read from the session, never from the request body — a userId a client
-     * could send is a userId a client could change, and this column is what
-     * /account/orders filters on. Null means guest, which the column allows.
-     */
-    const session = await auth();
-    const userId = session?.user?.id ?? null;
-
     // Our row first, so the Razorpay receipt can carry our id.
     const [order] = await db
       .insert(orders)
@@ -151,6 +159,44 @@ export async function POST(request: Request) {
         unitPriceInr: line.unitPriceInr,
       })),
     );
+
+    /*
+     * Keep the address on the account, if asked.
+     *
+     * After the order is safely written, and wrapped so it can never fail the
+     * checkout: a customer who cannot save an address should still be able to
+     * pay. createAddress promotes the first address to default on its own.
+     */
+    if (saveAddress) {
+      try {
+        const existing = await listAddresses(userId);
+        // Same street and PIN is the same address as far as a customer is
+        // concerned — re-entering it at checkout should not add a duplicate.
+        const duplicate = existing.some(
+          (row) =>
+            row.line1.trim().toLowerCase() ===
+              address.line1.trim().toLowerCase() &&
+            row.pincode === address.pincode,
+        );
+
+        if (!duplicate) {
+          await createAddress({
+            userId,
+            label: null,
+            fullName: address.name,
+            phone: contact.phone,
+            line1: address.line1,
+            line2: address.line2 || null,
+            city: address.city,
+            state: address.state,
+            pincode: address.pincode,
+            isDefault: false,
+          });
+        }
+      } catch (error) {
+        console.error("[checkout/create-order] save address", error);
+      }
+    }
 
     return NextResponse.json({
       ourOrderId: order.id,

@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
+import { auth } from "@/auth";
 import { OrderPending } from "@/components/commerce/OrderPending";
 import { TriangleA } from "@/components/layout/Wordmark";
 import { ButtonZ } from "@/components/ui/button-z";
-import { getOrderWithItems } from "@/lib/db/queries";
+import { getOrderForUser } from "@/lib/db/queries";
 import { pageMetadata } from "@/lib/site";
 import { formatINR } from "@/lib/utils";
 
@@ -27,7 +28,20 @@ export default async function OrderPage({ params }: Params) {
   const { id } = await params;
   if (!UUID.test(id)) notFound();
 
-  const order = await getOrderWithItems(id).catch(() => undefined);
+  /*
+   * The confirmation now requires ownership.
+   *
+   * This page used to be reachable by anyone holding the uuid, which made the
+   * link in an email or a browser history a way to read someone else's address
+   * and phone number. Ownership is part of the query, so another customer's
+   * order is indistinguishable from one that does not exist.
+   */
+  const session = await auth();
+  if (!session?.user?.id) redirect(`/login?next=/orders/${id}`);
+
+  const order = await getOrderForUser(id, session.user.id).catch(
+    () => undefined,
+  );
   if (!order) notFound();
 
   const short = order.id.slice(0, 8).toUpperCase();
@@ -49,6 +63,10 @@ export default async function OrderPage({ params }: Params) {
         <TriangleA className="text-5xl" />
         <h1 className="t-display-md mt-8">Order confirmed.</h1>
         <p className="t-label mt-4 text-fg-muted">Order {short}</p>
+        <p className="mt-6 max-w-sm text-sm text-fg-muted">
+          A confirmation has been sent to{" "}
+          <span className="font-mono break-all text-fg">{order.email}</span>.
+        </p>
       </header>
 
       <div className="mx-auto max-w-xl">
@@ -117,9 +135,17 @@ export default async function OrderPage({ params }: Params) {
           </div>
         </div>
 
-        <ButtonZ asChild variant="outline" className="mt-12">
-          <Link href="/shop">Back to the shop</Link>
-        </ButtonZ>
+        <div className="mt-12 flex flex-wrap items-center gap-6">
+          <ButtonZ asChild variant="outline">
+            <Link href="/shop">Back to the shop</Link>
+          </ButtonZ>
+          <Link
+            href={`/account/orders/${order.id}`}
+            className="t-label text-accent-ink underline-offset-4 hover:underline"
+          >
+            View in your account →
+          </Link>
+        </div>
       </div>
     </div>
   );

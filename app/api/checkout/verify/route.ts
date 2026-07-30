@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 
+import { auth } from "@/auth";
 import { verifySchema } from "@/lib/checkout";
+import { getOrderByRazorpayOrderId } from "@/lib/db/queries";
 import { markOrderFailed, settleOrderPaid } from "@/lib/db/settle";
+import { sendOrderConfirmation } from "@/lib/email/order-confirmation";
 import { verifyPaymentSignature } from "@/lib/razorpay/verify";
 
 export const runtime = "nodejs";
@@ -28,16 +31,59 @@ export async function POST(request: Request) {
     razorpay_signature: signature,
   } = parsed.data;
 
-  // HMAC of `<order_id>|<payment_id>` keyed with the API secret, compared in
-  // constant time. A mismatch means the handoff was tampered with.
-  if (
-    !verifyPaymentSignature({ razorpayOrderId, razorpayPaymentId, signature })
-  ) {
-    await markOrderFailed(razorpayOrderId).catch(() => {});
-    return NextResponse.json({ error: "Signature mismatch." }, { status: 400 });
+  /*
+   * Session first, then ownership, and only then the signature.
+   *
+   * A valid signature proves Razorpay signed this handoff; it does not prove who
+   * is replaying it, since the three ids travel through the browser. So the
+   * settle is bound to the session as well.
+   *
+   * The order of these checks is itself the fix for a real hole. A signature
+   * mismatch calls markOrderFailed, so while that ran first any anonymous caller
+   * who knew a pending razorpayOrderId could POST a junk signature and fail
+   * someone else's order out from under them before the webhook landed. Behind
+   * the session and ownership checks, the worst anyone can do is fail their own.
+   *
+   * Being strict here is safe because this route is not the source of truth:
+   * /api/webhooks/razorpay settles the same order server-to-server with no
+   * session involved. A refusal costs the caller a confirmation response, never
+   * a paid order.
+   */
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) {
+    return NextResponse.json(
+      { error: "Sign in to confirm your order." },
+      { status: 401 },
+    );
   }
 
   try {
+    const owner = await getOrderByRazorpayOrderId(razorpayOrderId);
+    if (!owner || owner.userId !== userId) {
+      // Same answer for "not yours" and "does not exist", so probing tells the
+      // caller nothing. Logged, because in our own flow this cannot happen.
+      if (owner) {
+        console.error(
+          "[checkout/verify] session does not own order",
+          razorpayOrderId,
+        );
+      }
+      return NextResponse.json({ error: "Unknown order." }, { status: 404 });
+    }
+
+    // HMAC of `<order_id>|<payment_id>` keyed with the API secret, compared in
+    // constant time. A mismatch means the handoff was tampered with.
+    if (
+      !verifyPaymentSignature({ razorpayOrderId, razorpayPaymentId, signature })
+    ) {
+      await markOrderFailed(razorpayOrderId).catch(() => {});
+      return NextResponse.json(
+        { error: "Signature mismatch." },
+        { status: 400 },
+      );
+    }
+
     const result = await settleOrderPaid(razorpayOrderId, razorpayPaymentId);
 
     if (result.status === "unknown-order") {
@@ -52,6 +98,18 @@ export async function POST(request: Request) {
         },
         { status: 409 },
       );
+    }
+
+    /*
+     * Fire-and-forget, after the order is settled. Not awaited for its result
+     * and it cannot throw — a mail failure must not turn a successful payment
+     * into an error the customer sees.
+     *
+     * settleOrderPaid is idempotent and reports alreadySettled, so the webhook
+     * getting there first does not produce a second email.
+     */
+    if (!result.alreadySettled) {
+      await sendOrderConfirmation(result.orderId);
     }
 
     return NextResponse.json({ ok: true, orderId: result.orderId });

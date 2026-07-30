@@ -57,6 +57,11 @@ export const checkoutSchema = z.object({
   address: addressSchema,
   billingSameAsShipping: z.boolean(),
   items: z.array(cartItemSchema).min(1, "Cart is empty."),
+  /**
+   * Whether to keep this address on the account after the order is placed.
+   * Advisory only — the server still decides, and silently skips a duplicate.
+   */
+  saveAddress: z.boolean().optional(),
 });
 
 /** What the checkout form itself validates — items live in the cart store. */
