@@ -68,8 +68,24 @@ export const orders = pgTable("orders", {
   totalInr: integer("total_inr").notNull(),
   razorpayOrderId: text("razorpay_order_id").unique(),
   razorpayPaymentId: text("razorpay_payment_id"),
-  /** Courier reference. Null until the order is actually handed over. */
+  /** Courier reference (AWB). Null until the order is actually handed over. */
   trackingNumber: text("tracking_number"),
+  /** Courier name, shown in the shipped email beside the AWB. */
+  courier: text("courier"),
+  /** Deep link, when the courier provides one. The AWB stands alone if not. */
+  trackingUrl: text("tracking_url"),
+  /**
+   * When the confirmation email was sent.
+   *
+   * The de-duplication key for order confirmations. Two independent callers can
+   * settle the same payment — the browser via /checkout/verify and Razorpay via
+   * the webhook — and whichever loses the race must not send a second email.
+   * Stamped inside the same transaction that flips the order to paid, so the
+   * check and the claim cannot interleave.
+   */
+  confirmationSentAt: timestamp("confirmation_sent_at", {
+    withTimezone: true,
+  }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

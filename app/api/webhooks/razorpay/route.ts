@@ -53,15 +53,14 @@ export async function POST(request: Request) {
         const result = await settleOrderPaid(razorpayOrderId, razorpayPaymentId);
 
         /*
-         * The email is sent from here as well as from /checkout/verify, because
-         * either can be the one that settles: if the customer closes the tab
-         * after paying, verify never runs and this is the only path left.
+         * Sent from here as well as from /checkout/verify, because either can
+         * be the one that settles: if the customer closes the tab after paying,
+         * verify never runs and this is the only path left.
          *
-         * Guarded on alreadySettled so whichever arrives second sends nothing.
-         * That flag is set inside settleOrderPaid's transaction, so the two
-         * racing callers cannot both see false.
+         * shouldSendConfirmation is claimed atomically inside the settle
+         * transaction, so of the two racing callers exactly one sends.
          */
-        if (result.status === "paid" && !result.alreadySettled) {
+        if (result.status === "paid" && result.shouldSendConfirmation) {
           await sendOrderConfirmation(result.orderId);
         }
 

@@ -1,12 +1,47 @@
-import { and, eq, gte, sql } from "drizzle-orm";
+import { and, eq, gte, isNull, sql } from "drizzle-orm";
 
 import { db } from "./index";
 import { orderItems, orders, variants } from "./schema";
 
 export type SettleResult =
-  | { status: "paid"; orderId: string; alreadySettled: boolean }
+  | {
+      status: "paid";
+      orderId: string;
+      alreadySettled: boolean;
+      /**
+       * True for exactly one caller, ever. See the claim in settleOrderPaid —
+       * this is what stops the browser and the webhook both mailing a receipt.
+       */
+      shouldSendConfirmation: boolean;
+    }
   | { status: "unknown-order" }
   | { status: "oversold"; orderId: string };
+
+/**
+ * Atomically claims the right to send this order's confirmation.
+ *
+ * A conditional UPDATE, not a read-then-write. Postgres defaults to READ
+ * COMMITTED, so two transactions can both SELECT `confirmation_sent_at IS NULL`
+ * and both decide to send. Folding the test into the UPDATE's WHERE clause
+ * makes the row itself the lock: exactly one statement matches, and the other
+ * returns nothing.
+ *
+ * Deliberately keyed on the timestamp rather than on order status. If a send
+ * failed after the order was marked paid, the stamp is still null and a later
+ * settle can legitimately claim it — status alone would have written that
+ * customer off permanently.
+ */
+async function claimConfirmation(
+  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  orderId: string,
+) {
+  const claimed = await tx
+    .update(orders)
+    .set({ confirmationSentAt: new Date() })
+    .where(and(eq(orders.id, orderId), isNull(orders.confirmationSentAt)))
+    .returning({ id: orders.id });
+  return claimed.length > 0;
+}
 
 /**
  * Marks an order paid and takes the stock, all or nothing.
@@ -28,12 +63,14 @@ export async function settleOrderPaid(
 
     if (!order) return { status: "unknown-order" as const };
 
-    // Already settled — by this payment or an earlier one. Do nothing.
+    // Already settled — by this payment or an earlier one. Take no stock, but
+    // still try the email claim: a previous settle may have died before it.
     if (order.status === "paid") {
       return {
         status: "paid" as const,
         orderId: order.id,
         alreadySettled: true,
+        shouldSendConfirmation: await claimConfirmation(tx, order.id),
       };
     }
 
@@ -71,6 +108,7 @@ export async function settleOrderPaid(
       status: "paid" as const,
       orderId: order.id,
       alreadySettled: false,
+      shouldSendConfirmation: await claimConfirmation(tx, order.id),
     };
   });
 }

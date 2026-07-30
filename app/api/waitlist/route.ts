@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { addToWaitlist } from "@/lib/db/queries";
+import { sendWaitlistWelcome } from "@/lib/email/waitlist";
 
 export const runtime = "nodejs";
 
@@ -75,11 +76,24 @@ export async function POST(request: Request) {
   }
 
   try {
-    await addToWaitlist(
-      parsed.data.email.toLowerCase().trim(),
-      parsed.data.source,
-      { productSlug: parsed.data.product, size: parsed.data.size },
-    );
+    const email = parsed.data.email.toLowerCase().trim();
+
+    await addToWaitlist(email, parsed.data.source, {
+      productSlug: parsed.data.product,
+      size: parsed.data.size,
+    });
+
+    /*
+     * Welcome mail after the row is safely written, and awaited only so a
+     * failure gets logged — sendEmail never throws, so this cannot turn a
+     * successful signup into an error. Someone on the list who did not get the
+     * mail is a far better outcome than someone who is not on the list.
+     */
+    await sendWaitlistWelcome({
+      email,
+      productSlug: parsed.data.product,
+    });
+
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("[waitlist]", error);

@@ -551,3 +551,31 @@ export async function getUserFlags(userId: string) {
     .limit(1);
   return row;
 }
+
+/**
+ * Marks an order shipped and records the courier reference.
+ *
+ * Returns the row so the caller can decide whether to mail. Nothing calls this
+ * yet — the admin surface that will is B07. It lives here rather than in the
+ * admin route so the shipped email has one trigger, not one per caller.
+ */
+export async function markOrderShipped(
+  orderId: string,
+  courier: { name: string; awb: string; trackingUrl?: string | null },
+) {
+  const [row] = await db
+    .update(orders)
+    .set({
+      status: "shipped",
+      courier: courier.name,
+      trackingNumber: courier.awb,
+      trackingUrl: courier.trackingUrl ?? null,
+      updatedAt: new Date(),
+    })
+    // Only a paid order can ship. Guarding here means a double-click, or a
+    // retry against an already-shipped order, updates nothing and returns
+    // undefined rather than re-sending the email.
+    .where(and(eq(orders.id, orderId), eq(orders.status, "paid")))
+    .returning();
+  return row;
+}

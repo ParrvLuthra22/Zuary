@@ -101,14 +101,15 @@ export async function POST(request: Request) {
     }
 
     /*
-     * Fire-and-forget, after the order is settled. Not awaited for its result
-     * and it cannot throw — a mail failure must not turn a successful payment
-     * into an error the customer sees.
+     * Send only if this call won the claim inside settleOrderPaid's
+     * transaction. `alreadySettled` is not the right test — under READ
+     * COMMITTED both callers can see an unsettled order and both would think
+     * they were first. The claim is a conditional UPDATE, so exactly one wins.
      *
-     * settleOrderPaid is idempotent and reports alreadySettled, so the webhook
-     * getting there first does not produce a second email.
+     * Cannot throw, by contract, so a mail failure never turns a successful
+     * payment into an error the customer sees.
      */
-    if (!result.alreadySettled) {
+    if (result.shouldSendConfirmation) {
       await sendOrderConfirmation(result.orderId);
     }
 

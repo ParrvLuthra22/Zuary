@@ -5,6 +5,8 @@ import type { Adapter } from "next-auth/adapters";
 import Resend from "next-auth/providers/resend";
 
 import authConfig from "./auth.config";
+import { MagicLink } from "@/emails/MagicLink";
+import { sendEmail } from "@/lib/email/send";
 import { db, getDb } from "@/lib/db";
 import {
   accounts,
@@ -175,7 +177,31 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
    * already resolves it to the existing user with that email. The Google flag
    * is what makes the pair interchangeable.
    */
-  providers: [...authConfig.providers, Resend({ from: process.env.EMAIL_FROM })],
+  providers: [
+    ...authConfig.providers,
+    Resend({
+      from: process.env.EMAIL_FROM,
+      /*
+       * Replaces Auth.js's built-in sign-in email, which is unstyled and
+       * unbranded. Auth.js awaits this and treats a throw as a failed sign-in
+       * attempt — so it goes through sendEmail, which never throws, and a
+       * delivery failure surfaces as "check your inbox" rather than an error
+       * page. The token is single-use either way.
+       */
+      async sendVerificationRequest({ identifier, url, provider }) {
+        const host = new URL(url).host;
+        const result = await sendEmail({
+          to: identifier,
+          subject: "Your ZUARY sign-in link",
+          react: MagicLink({ url, host }),
+          replyTo: provider.from ?? undefined,
+        });
+        if (!result.ok) {
+          console.error("[auth] magic link send failed", result.error);
+        }
+      },
+    }),
+  ],
 
   adapter: lazyDrizzleAdapter(),
 
