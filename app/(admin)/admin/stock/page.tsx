@@ -1,6 +1,6 @@
-import { StockGrid } from "@/components/admin/StockGrid";
-import { requireAdminPage } from "@/lib/admin/guard";
-import { listStockGrid } from "@/lib/db/admin-queries";
+import { StockGrid } from "@/client/components/admin/StockGrid";
+import { requireAdminPage } from "@/server/auth/guard";
+import { listStockGrid } from "@/server/db/queries";
 
 export default async function AdminStockPage() {
   // Authorisation before any query — see requireAdminPage.

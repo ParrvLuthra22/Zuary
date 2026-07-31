@@ -3,9 +3,9 @@ import { and, desc, eq, gt, isNull } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { OTP_MAX_ATTEMPTS, issueTicket, phoneRegex } from "@/lib/auth/otp";
-import { db } from "@/lib/db";
-import { otpCodes } from "@/lib/db/schema";
+import { OTP_MAX_ATTEMPTS, issueTicket, phoneRegex } from "@/server/auth/otp";
+import { db } from "@/server/db";
+import { otpCodes } from "@/server/db/schema";
 
 export const runtime = "nodejs";
 

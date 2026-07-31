@@ -1,7 +1,7 @@
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { NextResponse } from "next/server";
 
-import { NotAdminError, requireAdmin } from "@/lib/admin/guard";
+import { NotAdminError, requireAdmin } from "@/server/auth/guard";
 
 export const runtime = "nodejs";
 

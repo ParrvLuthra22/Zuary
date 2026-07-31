@@ -2,16 +2,16 @@ import type { Metadata } from "next";
 import ReactDOM from "react-dom";
 import { Suspense } from "react";
 
-import { auth } from "@/auth";
+import { auth } from "@/server/auth/config";
 
-import { NewsletterForm } from "@/components/commerce/NewsletterForm";
-import { ShopBrowser } from "@/components/commerce/ShopBrowser";
-import { RevealText } from "@/components/motion/RevealText";
-import { Marquee } from "@/components/sections/Marquee";
-import { PRODUCTS, availableProducts } from "@/lib/data/products";
-import { listWishlistSlugs } from "@/lib/db/queries";
-import { getProductImagesForSlugs } from "@/lib/product-images";
-import { pageMetadata } from "@/lib/site";
+import { NewsletterForm } from "@/client/components/commerce/NewsletterForm";
+import { ShopBrowser } from "@/client/components/commerce/ShopBrowser";
+import { RevealText } from "@/client/components/motion/RevealText";
+import { Marquee } from "@/client/components/sections/Marquee";
+import { PRODUCTS, availableProducts } from "@/shared/constants/products";
+import { listWishlistSlugs } from "@/server/db/queries";
+import { getProductImagesForSlugs } from "@/server/db/queries/product-images";
+import { pageMetadata } from "@/shared/constants/site";
 
 export const metadata: Metadata = pageMetadata({
   title: "Shop",

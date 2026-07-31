@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
-import { ProductRail } from "@/components/sections/ProductRail";
-import { PRODUCTS } from "@/lib/data/products";
-import { pageMetadata } from "@/lib/site";
+import { ProductRail } from "@/client/components/sections/ProductRail";
+import { PRODUCTS } from "@/shared/constants/products";
+import { pageMetadata } from "@/shared/constants/site";
 
 export const metadata: Metadata = pageMetadata({
   title: "Products",

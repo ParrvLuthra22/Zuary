@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { ImageManager } from "@/components/admin/ImageManager";
-import { ProductForm } from "@/components/admin/ProductForm";
-import { requireAdminPage } from "@/lib/admin/guard";
-import { getProductRow } from "@/lib/catalogue";
-import { listImagesForAdmin } from "@/lib/db/admin-queries";
+import { ImageManager } from "@/client/components/admin/ImageManager";
+import { ProductForm } from "@/client/components/admin/ProductForm";
+import { requireAdminPage } from "@/server/auth/guard";
+import { getProductRow } from "@/server/db/queries/catalogue";
+import { listImagesForAdmin } from "@/server/db/queries";
 
 export default async function AdminProductPage({
   params,

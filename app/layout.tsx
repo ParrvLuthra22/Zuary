@@ -1,11 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import { Eczar, Inter, Inter_Tight, JetBrains_Mono } from "next/font/google";
 
-import { CartAnnouncer } from "@/components/commerce/CartAnnouncer";
-import { SkipLink } from "@/components/layout/SkipLink";
-import { ThemeProvider } from "@/components/layout/ThemeProvider";
-import { MotionLayer } from "@/components/motion/MotionLayer";
-import { Toaster } from "@/components/ui/sonner";
+import { CartAnnouncer } from "@/client/components/commerce/CartAnnouncer";
+import { SkipLink } from "@/client/components/layout/SkipLink";
+import { ThemeProvider } from "@/client/components/layout/ThemeProvider";
+import { MotionLayer } from "@/client/components/motion/MotionLayer";
+import { Toaster } from "@/client/components/ui/sonner";
 
 import "./globals.css";
 

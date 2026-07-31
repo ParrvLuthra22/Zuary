@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 
-import { RevealText } from "@/components/motion/RevealText";
-import { Marquee } from "@/components/sections/Marquee";
-import { MaskedScrollSection } from "@/components/sections/MaskedScrollSection";
-import { ProductRail } from "@/components/sections/ProductRail";
-import { currentDrop } from "@/lib/data/drops";
-import { PRODUCTS } from "@/lib/data/products";
-import { pageMetadata } from "@/lib/site";
+import { RevealText } from "@/client/components/motion/RevealText";
+import { Marquee } from "@/client/components/sections/Marquee";
+import { MaskedScrollSection } from "@/client/components/sections/MaskedScrollSection";
+import { ProductRail } from "@/client/components/sections/ProductRail";
+import { currentDrop } from "@/shared/constants/drops";
+import { PRODUCTS } from "@/shared/constants/products";
+import { pageMetadata } from "@/shared/constants/site";
 
 export const metadata: Metadata = pageMetadata({
   title: "Drops",

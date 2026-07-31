@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { pageMetadata } from "@/lib/site";
+import { pageMetadata } from "@/shared/constants/site";
 
 // The cart page itself is a client component, so its metadata lives here.
 export const metadata: Metadata = pageMetadata({

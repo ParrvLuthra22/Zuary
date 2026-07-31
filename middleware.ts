@@ -1,12 +1,15 @@
 import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
 
-import authConfig from "./auth.config";
+import authConfig from "@/server/auth/edge-config";
 
 /*
- * Built from auth.config.ts, not auth.ts: the Drizzle adapter and the Neon
- * driver cannot be shipped to the edge, and under the JWT strategy middleware
- * does not need them — it only decodes the session cookie.
+ * Built from server/auth/edge-config.ts, not server/auth/config.ts: the Drizzle
+ * adapter and the Neon driver cannot be shipped to the edge, and under the JWT
+ * strategy middleware does not need them — it only decodes the session cookie.
+ *
+ * That file is also the one module under /server without the `server-only`
+ * banner, for the same reason: this import is the edge runtime, not the server.
  */
 const { auth } = NextAuth(authConfig);
 

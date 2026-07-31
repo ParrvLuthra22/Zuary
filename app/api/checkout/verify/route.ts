@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 
-import { auth } from "@/auth";
-import { verifySchema } from "@/lib/checkout";
-import { getOrderByRazorpayOrderId } from "@/lib/db/queries";
-import { markOrderFailed, settleOrderPaid } from "@/lib/db/settle";
-import { sendOrderConfirmation } from "@/lib/email/order-confirmation";
-import { verifyPaymentSignature } from "@/lib/razorpay/verify";
+import { auth } from "@/server/auth/config";
+import { verifySchema } from "@/shared/validators/checkout";
+import { getOrderByRazorpayOrderId } from "@/server/db/queries";
+import { markOrderFailed, settleOrderPaid } from "@/server/db/settle";
+import { sendOrderConfirmation } from "@/server/services/email.service";
+import { verifyPaymentSignature } from "@/server/services/payments.service";
 
 export const runtime = "nodejs";
 

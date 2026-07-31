@@ -2,18 +2,18 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { auth } from "@/auth";
+import { auth } from "@/server/auth/config";
 import {
   ORDER_DATE,
   StatusPill,
   ThumbStack,
   orderNumber,
-} from "@/components/account/OrderBits";
-import { TriangleA } from "@/components/layout/Wordmark";
-import { ButtonZ } from "@/components/ui/button-z";
-import { listOrdersForUser } from "@/lib/db/queries";
-import { pageMetadata } from "@/lib/site";
-import { formatINR } from "@/lib/utils";
+} from "@/client/components/account/OrderBits";
+import { TriangleA } from "@/client/components/layout/Wordmark";
+import { ButtonZ } from "@/client/components/ui/button-z";
+import { listOrdersForUser } from "@/server/db/queries";
+import { pageMetadata } from "@/shared/constants/site";
+import { formatINR } from "@/shared/utils";
 
 export const metadata: Metadata = pageMetadata({
   title: "Orders",

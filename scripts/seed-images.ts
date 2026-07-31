@@ -2,9 +2,9 @@ import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import { and, eq } from "drizzle-orm";
 
-import { BLUR } from "../lib/data/blur";
-import { PRODUCTS } from "../lib/data/products";
-import { productImages } from "../lib/db/schema";
+import { BLUR } from "../shared/constants/blur";
+import { PRODUCTS } from "../shared/constants/products";
+import { productImages } from "../server/db/schema";
 
 /**
  * Seeds productImages from the committed static photography.

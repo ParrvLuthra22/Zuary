@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { addToWaitlist } from "@/lib/db/queries";
-import { clientIp, rateLimit } from "@/lib/rate-limit";
-import { sendWaitlistWelcome } from "@/lib/email/waitlist";
+import { addToWaitlist } from "@/server/db/queries";
+import { clientIp, rateLimit } from "@/server/services/rate-limit.service";
+import { sendWaitlistWelcome } from "@/server/services/email.service";
 
 export const runtime = "nodejs";
 

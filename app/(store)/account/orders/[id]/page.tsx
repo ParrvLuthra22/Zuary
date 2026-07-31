@@ -2,18 +2,18 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
-import { auth } from "@/auth";
+import { auth } from "@/server/auth/config";
 import {
   ORDER_DATE,
   StatusPill,
   orderNumber,
-} from "@/components/account/OrderBits";
-import { ButtonZ } from "@/components/ui/button-z";
-import { getProduct } from "@/lib/data/products";
-import { getOrderForUser } from "@/lib/db/queries";
-import type { OrderStatus } from "@/lib/db/schema";
-import { SUPPORT_EMAIL, pageMetadata } from "@/lib/site";
-import { cn, formatINR } from "@/lib/utils";
+} from "@/client/components/account/OrderBits";
+import { ButtonZ } from "@/client/components/ui/button-z";
+import { getProduct } from "@/shared/constants/products";
+import { getOrderForUser } from "@/server/db/queries";
+import type { OrderStatus } from "@/server/db/schema";
+import { SUPPORT_EMAIL, pageMetadata } from "@/shared/constants/site";
+import { cn, formatINR } from "@/shared/utils";
 
 export const metadata: Metadata = pageMetadata({
   title: "Order",

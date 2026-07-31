@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 
-import { markOrderFailed, settleOrderPaid } from "@/lib/db/settle";
-import { sendOrderConfirmation } from "@/lib/email/order-confirmation";
-import { verifyWebhookSignature } from "@/lib/razorpay/verify";
+import { markOrderFailed, settleOrderPaid } from "@/server/db/settle";
+import { sendOrderConfirmation } from "@/server/services/email.service";
+import { verifyWebhookSignature } from "@/server/services/payments.service";
 
 export const runtime = "nodejs";
 

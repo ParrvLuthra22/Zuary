@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { AdminSidebar, AdminSignOut } from "@/components/admin/AdminNav";
-import { NotAdminError, requireAdmin } from "@/lib/admin/guard";
+import { AdminSidebar, AdminSignOut } from "@/client/components/admin/AdminNav";
+import { NotAdminError, requireAdmin } from "@/server/auth/guard";
 
 export const metadata: Metadata = {
   title: "ZUARY admin",

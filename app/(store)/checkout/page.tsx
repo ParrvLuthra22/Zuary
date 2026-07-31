@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 
-import { auth } from "@/auth";
-import { CheckoutForm } from "@/components/commerce/CheckoutForm";
-import { CheckoutSignIn } from "@/components/commerce/CheckoutSignIn";
-import { listAddresses } from "@/lib/db/queries";
-import { pageMetadata } from "@/lib/site";
+import { auth } from "@/server/auth/config";
+import { CheckoutForm } from "@/client/components/commerce/CheckoutForm";
+import { CheckoutSignIn } from "@/client/components/commerce/CheckoutSignIn";
+import { listAddresses } from "@/server/db/queries";
+import { pageMetadata } from "@/shared/constants/site";
 
 export const metadata: Metadata = pageMetadata({
   title: "Checkout",

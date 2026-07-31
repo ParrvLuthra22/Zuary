@@ -20,6 +20,81 @@ const eslintConfig = [
       "next-env.d.ts",
     ],
   },
+  {
+    /*
+     * The layer boundary: nothing under /client may reach into /server.
+     *
+     * `import "server-only"` already makes this fail at build time, but it fails
+     * with a stack trace pointing at the package, several files away from the
+     * import that caused it. This rule names the offending line in the editor
+     * before a build is ever run.
+     *
+     * Two carve-outs, both deliberate:
+     *
+     * allowTypeImports — a dozen client components take their prop types from
+     * the query layer and the Drizzle schema (`Address`, `ValidatedLine`,
+     * `OrderStatus`). `import type` is erased by the compiler, so no server code
+     * reaches the browser and server-only never fires. Banning it would mean
+     * duplicating those shapes by hand and letting them drift.
+     *
+     * @/server/actions/* — a `"use server"` module is the sanctioned way for a
+     * client component to reach the server. The import compiles to an RPC
+     * reference, not to the function body, so nothing server-side is bundled.
+     * Blocking it would ban server actions outright, which is the opposite of
+     * what this layout is for.
+     */
+    files: ["client/**/*.ts", "client/**/*.tsx"],
+    rules: {
+      // The base rule has no allowTypeImports; the typescript-eslint version
+      // does, so the base one is turned off to keep them from both firing.
+      "no-restricted-imports": "off",
+      "@typescript-eslint/no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              /*
+               * The banned subtrees are named rather than written as
+               * "@/server/** minus actions". These are gitignore-style
+               * patterns, so a bare directory name already covers everything
+               * beneath it — and a negation like "!@/server/actions/**" does
+               * not survive a preceding "@/server", which matches the whole
+               * tree as a directory and silently re-bans what the negation was
+               * meant to allow.
+               *
+               * A new top-level directory under /server must be added to this
+               * list or it will not be guarded here. server-only still catches
+               * it at build time; this list is what makes it fail in the editor
+               * first, with the offending line highlighted.
+               */
+              group: ["@/server/db", "@/server/auth", "@/server/services"],
+              message:
+                "Client code cannot import from /server. Pass the data in as a prop from a server component, or call a server action from @/server/actions. Type-only imports are allowed.",
+              allowTypeImports: true,
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    /*
+     * NavBar is the one server component filed under /client.
+     *
+     * It is not browser code — it has no "use client", it awaits auth() and
+     * hands three plain fields to <Nav />, which is the client component. It
+     * lives here because /client is the presentation layer in this layout and
+     * holds both RSCs and browser components, and because both route groups
+     * render it so it cannot sit inside either one.
+     *
+     * The rule above is directory-scoped and cannot tell an RSC from a client
+     * component, so the exemption is named rather than pattern-matched: one
+     * file, visible in the config. If a second file needs this, the layout is
+     * probably wrong and /client should be split by runtime instead.
+     */
+    files: ["client/components/layout/NavBar.tsx"],
+    rules: { "@typescript-eslint/no-restricted-imports": "off" },
+  },
 ];
 
 export default eslintConfig;

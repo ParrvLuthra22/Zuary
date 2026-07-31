@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
-import { auth } from "@/auth";
-import { AccountNav } from "@/components/account/AccountNav";
+import { auth } from "@/server/auth/config";
+import { AccountNav } from "@/client/components/account/AccountNav";
 
 /**
  * Middleware already gates /account/*, but this layout re-checks.

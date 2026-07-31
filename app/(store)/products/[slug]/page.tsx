@@ -2,24 +2,24 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { auth } from "@/auth";
-import { BuyBox } from "@/components/commerce/BuyBox";
-import { ComingSoonCard } from "@/components/commerce/ComingSoonCard";
-import { NotifyButton } from "@/components/commerce/NotifyButton";
-import { ProductCard } from "@/components/commerce/ProductCard";
-import { ProductGallery } from "@/components/commerce/ProductGallery";
-import { WishlistButton } from "@/components/commerce/WishlistButton";
-import { TriangleA } from "@/components/layout/Wordmark";
-import { getVariantStock, listWishlistSlugs } from "@/lib/db/queries";
-import { getProductImages } from "@/lib/product-images";
-import { JsonLd, productSchema } from "@/lib/schema";
-import { pageMetadata } from "@/lib/site";
+import { auth } from "@/server/auth/config";
+import { BuyBox } from "@/client/components/commerce/BuyBox";
+import { ComingSoonCard } from "@/client/components/commerce/ComingSoonCard";
+import { NotifyButton } from "@/client/components/commerce/NotifyButton";
+import { ProductCard } from "@/client/components/commerce/ProductCard";
+import { ProductGallery } from "@/client/components/commerce/ProductGallery";
+import { WishlistButton } from "@/client/components/commerce/WishlistButton";
+import { TriangleA } from "@/client/components/layout/Wordmark";
+import { getVariantStock, listWishlistSlugs } from "@/server/db/queries";
+import { getProductImages } from "@/server/db/queries/product-images";
+import { JsonLd, productSchema } from "@/shared/utils/json-ld";
+import { pageMetadata } from "@/shared/constants/site";
 import {
   PRODUCTS,
   availableProducts,
   getProduct,
   type Product,
-} from "@/lib/data/products";
+} from "@/shared/constants/products";
 
 type Params = { params: Promise<{ slug: string }> };
 

@@ -4,12 +4,12 @@ import { notFound } from "next/navigation";
 import {
   CopyAddressButton,
   OrderActions,
-} from "@/components/admin/OrderActions";
-import { getOrderForAdmin } from "@/lib/db/admin-queries";
-import type { OrderStatus } from "@/lib/db/schema";
-import { shortOrderId } from "@/lib/order-number";
-import { cn, formatINR } from "@/lib/utils";
-import { requireAdminPage } from "@/lib/admin/guard";
+} from "@/client/components/admin/OrderActions";
+import { getOrderForAdmin } from "@/server/db/queries";
+import type { OrderStatus } from "@/server/db/schema";
+import { shortOrderId } from "@/shared/utils/order-number";
+import { cn, formatINR } from "@/shared/utils";
+import { requireAdminPage } from "@/server/auth/guard";
 
 const STAMP = new Intl.DateTimeFormat("en-IN", {
   day: "2-digit",

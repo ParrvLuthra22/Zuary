@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
-import { auth } from "@/auth";
-import { OrderPending } from "@/components/commerce/OrderPending";
-import { TriangleA } from "@/components/layout/Wordmark";
-import { ButtonZ } from "@/components/ui/button-z";
-import { getOrderForUser } from "@/lib/db/queries";
-import { pageMetadata } from "@/lib/site";
-import { formatINR } from "@/lib/utils";
+import { auth } from "@/server/auth/config";
+import { OrderPending } from "@/client/components/commerce/OrderPending";
+import { TriangleA } from "@/client/components/layout/Wordmark";
+import { ButtonZ } from "@/client/components/ui/button-z";
+import { getOrderForUser } from "@/server/db/queries";
+import { pageMetadata } from "@/shared/constants/site";
+import { formatINR } from "@/shared/utils";
 
 export const metadata: Metadata = pageMetadata({
   title: "Order",

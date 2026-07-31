@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { TriangleA } from "@/components/layout/Wordmark";
-import { ButtonZ } from "@/components/ui/button-z";
+import { TriangleA } from "@/client/components/layout/Wordmark";
+import { ButtonZ } from "@/client/components/ui/button-z";
 
 export const metadata: Metadata = {
   title: "Not found",

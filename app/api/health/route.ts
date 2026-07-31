@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
-import { db } from "@/lib/db";
+import { db } from "@/server/db";
 
 export const runtime = "nodejs";
 /** Uptime checks must never be served from a cache. */

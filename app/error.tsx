@@ -2,8 +2,8 @@
 
 import { useEffect } from "react";
 
-import { TriangleA } from "@/components/layout/Wordmark";
-import { ButtonZ } from "@/components/ui/button-z";
+import { TriangleA } from "@/client/components/layout/Wordmark";
+import { ButtonZ } from "@/client/components/ui/button-z";
 
 export default function Error({
   error,

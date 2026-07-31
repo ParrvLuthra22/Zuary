@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { z } from "zod";
 
-import { TriangleA } from "@/components/layout/Wordmark";
-import { pageMetadata } from "@/lib/site";
+import { TriangleA } from "@/client/components/layout/Wordmark";
+import { pageMetadata } from "@/shared/constants/site";
 
 export const metadata: Metadata = pageMetadata({
   title: "Check your inbox",

@@ -1,9 +1,9 @@
 import type { MetadataRoute } from "next";
 
-import { DROPS } from "@/lib/data/drops";
-import { POLICIES } from "@/lib/data/policies";
-import { PRODUCTS } from "@/lib/data/products";
-import { siteUrl } from "@/lib/site";
+import { DROPS } from "@/shared/constants/drops";
+import { POLICIES } from "@/shared/constants/policies";
+import { PRODUCTS } from "@/shared/constants/products";
+import { siteUrl } from "@/shared/constants/site";
 
 /** Cart, checkout and orders are deliberately absent — see robots.ts. */
 const STATIC_ROUTES: { path: string; priority: number; freq: MetadataRoute.Sitemap[number]["changeFrequency"] }[] = [

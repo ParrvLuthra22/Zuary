@@ -1,14 +1,14 @@
 import { eq, inArray } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
-import { auth } from "@/auth";
-import { checkoutSchema } from "@/lib/checkout";
-import { shippingFor } from "@/lib/data/policies";
-import { db } from "@/lib/db";
-import { createAddress, listAddresses } from "@/lib/db/queries";
-import { orderItems, orders, products, variants } from "@/lib/db/schema";
-import { clientIp, rateLimit } from "@/lib/rate-limit";
-import { RAZORPAY_CURRENCY, razorpay, toPaise } from "@/lib/razorpay/client";
+import { auth } from "@/server/auth/config";
+import { checkoutSchema } from "@/shared/validators/checkout";
+import { shippingFor } from "@/shared/constants/policies";
+import { db } from "@/server/db";
+import { createAddress, listAddresses } from "@/server/db/queries";
+import { orderItems, orders, products, variants } from "@/server/db/schema";
+import { clientIp, rateLimit } from "@/server/services/rate-limit.service";
+import { RAZORPAY_CURRENCY, razorpay, toPaise } from "@/server/services/payments.service";
 
 export const runtime = "nodejs";
 

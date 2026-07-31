@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 
-import { RevealText } from "@/components/motion/RevealText";
-import { TeamGrid } from "@/components/about/TeamGrid";
-import { SIZE_GUIDE } from "@/lib/data/products";
-import { TEAM } from "@/lib/data/team";
-import { pageMetadata } from "@/lib/site";
+import { RevealText } from "@/client/components/motion/RevealText";
+import { TeamGrid } from "@/client/components/about/TeamGrid";
+import { SIZE_GUIDE } from "@/shared/constants/products";
+import { TEAM } from "@/shared/constants/team";
+import { pageMetadata } from "@/shared/constants/site";
 
 const DESCRIPTION =
   "Three trousers, one block, two mills. Why ZUARY cuts fixed runs instead of a catalogue.";

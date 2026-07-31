@@ -2,8 +2,8 @@ import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import { eq } from "drizzle-orm";
 
-import { PRODUCTS, SIZES } from "../lib/data/products";
-import { products, variants } from "../lib/db/schema";
+import { PRODUCTS, SIZES } from "../shared/constants/products";
+import { products, variants } from "../server/db/schema";
 
 const STARTING_STOCK = 25;
 

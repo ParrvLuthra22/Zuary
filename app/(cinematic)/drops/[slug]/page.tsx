@@ -1,22 +1,22 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { auth } from "@/auth";
-import { ChapterClose } from "@/components/drops/ChapterClose";
+import { auth } from "@/server/auth/config";
+import { ChapterClose } from "@/client/components/drops/ChapterClose";
 import {
   DropLocked,
   EarlyAccessBand,
-} from "@/components/drops/ChapterGate";
-import { ChapterLookbook } from "@/components/drops/ChapterLookbook";
-import { ChapterManifesto } from "@/components/drops/ChapterManifesto";
-import { ChapterMaterial } from "@/components/drops/ChapterMaterial";
-import { ChapterProducts } from "@/components/drops/ChapterProducts";
-import { ChapterTitle } from "@/components/drops/ChapterTitle";
-import { DROPS, getDrop } from "@/lib/data/drops";
-import { PRODUCTS } from "@/lib/data/products";
-import { getUserFlags } from "@/lib/db/queries";
-import { JsonLd, dropSchema } from "@/lib/schema";
-import { pageMetadata } from "@/lib/site";
+} from "@/client/components/drops/ChapterGate";
+import { ChapterLookbook } from "@/client/components/drops/ChapterLookbook";
+import { ChapterManifesto } from "@/client/components/drops/ChapterManifesto";
+import { ChapterMaterial } from "@/client/components/drops/ChapterMaterial";
+import { ChapterProducts } from "@/client/components/drops/ChapterProducts";
+import { ChapterTitle } from "@/client/components/drops/ChapterTitle";
+import { DROPS, getDrop } from "@/shared/constants/drops";
+import { PRODUCTS } from "@/shared/constants/products";
+import { getUserFlags } from "@/server/db/queries";
+import { JsonLd, dropSchema } from "@/shared/utils/json-ld";
+import { pageMetadata } from "@/shared/constants/site";
 
 type Params = { params: Promise<{ slug: string }> };
 

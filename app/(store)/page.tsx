@@ -1,23 +1,23 @@
 import type { Metadata } from "next";
 
-import { DropBridge } from "@/components/sections/DropBridge";
-import { HeroScrub } from "@/components/sections/HeroScrub";
-import { Marquee } from "@/components/sections/Marquee";
-import { MaterialScroll } from "@/components/sections/MaterialScroll";
-import { RangeSection } from "@/components/sections/RangeSection";
-import { SpecsTable } from "@/components/sections/SpecsTable";
-import { TrioRail } from "@/components/sections/TrioRail";
-import { WaitlistSection } from "@/components/sections/WaitlistSection";
-import { currentDrop } from "@/lib/data/drops";
+import { DropBridge } from "@/client/components/sections/DropBridge";
+import { HeroScrub } from "@/client/components/sections/HeroScrub";
+import { Marquee } from "@/client/components/sections/Marquee";
+import { MaterialScroll } from "@/client/components/sections/MaterialScroll";
+import { RangeSection } from "@/client/components/sections/RangeSection";
+import { SpecsTable } from "@/client/components/sections/SpecsTable";
+import { TrioRail } from "@/client/components/sections/TrioRail";
+import { WaitlistSection } from "@/client/components/sections/WaitlistSection";
+import { currentDrop } from "@/shared/constants/drops";
 import {
   PRODUCTS,
   availableProducts,
   comingSoonProducts,
-} from "@/lib/data/products";
+} from "@/shared/constants/products";
 
-import { getProductImages } from "@/lib/product-images";
-import { JsonLd, organizationSchema } from "@/lib/schema";
-import { SITE_DESCRIPTION, pageMetadata } from "@/lib/site";
+import { getProductImages } from "@/server/db/queries/product-images";
+import { JsonLd, organizationSchema } from "@/shared/utils/json-ld";
+import { SITE_DESCRIPTION, pageMetadata } from "@/shared/constants/site";
 
 /**
  * Full length → detail → full length. Cross-dissolving straight down 01…06

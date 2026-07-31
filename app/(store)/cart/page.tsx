@@ -6,19 +6,19 @@ import {
   CartLineList,
   CartTotals,
   CartWarning,
-} from "@/components/commerce/CartLines";
-import { useCartValidation } from "@/components/commerce/useCartValidation";
-import { TriangleA } from "@/components/layout/Wordmark";
-import { ButtonZ } from "@/components/ui/button-z";
-import { Skeleton } from "@/components/ui/skeleton";
-import { shippingFor } from "@/lib/data/policies";
-import { formatINR } from "@/lib/utils";
+} from "@/client/components/commerce/CartLines";
+import { useCartValidation } from "@/client/hooks/useCartValidation";
+import { TriangleA } from "@/client/components/layout/Wordmark";
+import { ButtonZ } from "@/client/components/ui/button-z";
+import { Skeleton } from "@/client/components/ui/skeleton";
+import { shippingFor } from "@/shared/constants/policies";
+import { formatINR } from "@/shared/utils";
 import {
   cartCount,
   cartSubtotal,
   useCartHydrated,
   useCartStore,
-} from "@/stores/cart";
+} from "@/client/stores/cart";
 
 export default function CartPage() {
   const items = useCartStore((s) => s.items);

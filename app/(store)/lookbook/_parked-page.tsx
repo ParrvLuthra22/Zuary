@@ -18,13 +18,13 @@
  */
 import type { Metadata } from "next";
 
-import { ProductCard } from "@/components/commerce/ProductCard";
-import { LookbookGrid } from "@/components/lookbook/LookbookGrid";
-import { StickyStack } from "@/components/lookbook/StickyStack";
-import { RevealText } from "@/components/motion/RevealText";
-import { currentDrop } from "@/lib/data/drops";
-import { PRODUCTS } from "@/lib/data/products";
-import { pageMetadata } from "@/lib/site";
+import { ProductCard } from "@/client/components/commerce/ProductCard";
+import { LookbookGrid } from "@/client/components/lookbook/LookbookGrid";
+import { StickyStack } from "@/client/components/lookbook/StickyStack";
+import { RevealText } from "@/client/components/motion/RevealText";
+import { currentDrop } from "@/shared/constants/drops";
+import { PRODUCTS } from "@/shared/constants/products";
+import { pageMetadata } from "@/shared/constants/site";
 
 export const metadata: Metadata = pageMetadata({
   title: "Lookbook",

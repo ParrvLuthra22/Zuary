@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { auth } from "@/auth";
-import { getOrderForUser } from "@/lib/db/queries";
+import { auth } from "@/server/auth/config";
+import { getOrderForUser } from "@/server/db/queries";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

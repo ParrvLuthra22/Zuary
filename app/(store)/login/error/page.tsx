@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { ButtonZ } from "@/components/ui/button-z";
-import { pageMetadata } from "@/lib/site";
+import { ButtonZ } from "@/client/components/ui/button-z";
+import { pageMetadata } from "@/shared/constants/site";
 
 export const metadata: Metadata = pageMetadata({
   title: "Sign-in problem",

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { requireAdminPage } from "@/lib/admin/guard";
+import { requireAdminPage } from "@/server/auth/guard";
 
 /** Orders is the working queue, so /admin opens straight into it. */
 export default async function AdminIndexPage() {

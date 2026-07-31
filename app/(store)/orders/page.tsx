@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { pageMetadata } from "@/lib/site";
+import { pageMetadata } from "@/shared/constants/site";
 
 export const metadata: Metadata = pageMetadata({
   title: "Orders",

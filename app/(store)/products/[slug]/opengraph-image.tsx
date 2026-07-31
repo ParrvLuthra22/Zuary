@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-import { PRODUCTS, getProduct } from "@/lib/data/products";
+import { PRODUCTS, getProduct } from "@/shared/constants/products";
 
 export const runtime = "nodejs";
 export const alt = "ZUARY product";

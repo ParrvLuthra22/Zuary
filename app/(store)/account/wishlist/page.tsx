@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
-import { auth } from "@/auth";
-import { ProductCard } from "@/components/commerce/ProductCard";
-import { TriangleA } from "@/components/layout/Wordmark";
-import { getProduct } from "@/lib/data/products";
-import { listWishlistSlugs } from "@/lib/db/queries";
-import { pageMetadata } from "@/lib/site";
+import { auth } from "@/server/auth/config";
+import { ProductCard } from "@/client/components/commerce/ProductCard";
+import { TriangleA } from "@/client/components/layout/Wordmark";
+import { getProduct } from "@/shared/constants/products";
+import { listWishlistSlugs } from "@/server/db/queries";
+import { pageMetadata } from "@/shared/constants/site";
 
 export const metadata: Metadata = pageMetadata({
   title: "Wishlist",

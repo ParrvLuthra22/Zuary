@@ -4,10 +4,10 @@ import { notFound } from "next/navigation";
 import {
   getCustomerForAdmin,
   listOrdersForCustomer,
-} from "@/lib/db/admin-queries";
-import { shortOrderId } from "@/lib/order-number";
-import { formatINR } from "@/lib/utils";
-import { requireAdminPage } from "@/lib/admin/guard";
+} from "@/server/db/queries";
+import { shortOrderId } from "@/shared/utils/order-number";
+import { formatINR } from "@/shared/utils";
+import { requireAdminPage } from "@/server/auth/guard";
 
 const DATE = new Intl.DateTimeFormat("en-IN", {
   day: "2-digit",

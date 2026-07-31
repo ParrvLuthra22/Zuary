@@ -1,7 +1,7 @@
-import { CartSheet } from "@/components/commerce/CartSheet";
-import { NotifyDrawer } from "@/components/commerce/NotifyDrawer";
-import { Footer } from "@/components/layout/Footer";
-import { NavBar } from "@/components/layout/NavBar";
+import { CartSheet } from "@/client/components/commerce/CartSheet";
+import { NotifyDrawer } from "@/client/components/commerce/NotifyDrawer";
+import { Footer } from "@/client/components/layout/Footer";
+import { NavBar } from "@/client/components/layout/NavBar";
 
 /* SmoothScroll, ScrollTriggerProvider, PageTransition and TrouserCursor are
    mounted once in the root layout — mounting them here too would give Lenis

@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { POLICIES, getPolicy } from "@/lib/data/policies";
-import { pageMetadata } from "@/lib/site";
+import { POLICIES, getPolicy } from "@/shared/constants/policies";
+import { pageMetadata } from "@/shared/constants/site";
 
 type Params = { params: Promise<{ slug: string }> };
 

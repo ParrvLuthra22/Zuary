@@ -1,8 +1,8 @@
 import Link from "next/link";
 
-import { requireAdminPage } from "@/lib/admin/guard";
-import { listProductsForAdmin } from "@/lib/db/admin-queries";
-import { formatINR } from "@/lib/utils";
+import { requireAdminPage } from "@/server/auth/guard";
+import { listProductsForAdmin } from "@/server/db/queries";
+import { formatINR } from "@/shared/utils";
 
 export default async function AdminProductsPage() {
   // Authorisation before any query — see requireAdminPage.

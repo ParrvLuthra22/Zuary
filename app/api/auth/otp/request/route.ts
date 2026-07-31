@@ -2,10 +2,10 @@ import { hash } from "bcryptjs";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { OTP_TTL_MS, generateCode, phoneRegex, sendOtp } from "@/lib/auth/otp";
-import { db } from "@/lib/db";
-import { otpCodes } from "@/lib/db/schema";
-import { clientIp, rateLimit } from "@/lib/rate-limit";
+import { OTP_TTL_MS, generateCode, phoneRegex, sendOtp } from "@/server/auth/otp";
+import { db } from "@/server/db";
+import { otpCodes } from "@/server/db/schema";
+import { clientIp, rateLimit } from "@/server/services/rate-limit.service";
 
 export const runtime = "nodejs";
 

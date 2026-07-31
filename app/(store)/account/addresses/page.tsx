@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
-import { auth } from "@/auth";
-import { AddressList } from "@/components/account/AddressList";
-import { listAddresses } from "@/lib/db/queries";
-import { pageMetadata } from "@/lib/site";
+import { auth } from "@/server/auth/config";
+import { AddressList } from "@/client/components/account/AddressList";
+import { listAddresses } from "@/server/db/queries";
+import { pageMetadata } from "@/shared/constants/site";
 
 export const metadata: Metadata = pageMetadata({
   title: "Addresses",

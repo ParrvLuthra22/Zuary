@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { auth } from "@/auth";
-import { LoginForm } from "@/components/auth/LoginForm";
-import { Wordmark } from "@/components/layout/Wordmark";
-import { pageMetadata } from "@/lib/site";
+import { auth } from "@/server/auth/config";
+import { LoginForm } from "@/client/components/auth/LoginForm";
+import { Wordmark } from "@/client/components/layout/Wordmark";
+import { pageMetadata } from "@/shared/constants/site";
 
 export const metadata: Metadata = pageMetadata({
   title: "Sign in",
