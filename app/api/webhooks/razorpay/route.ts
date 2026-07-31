@@ -1,86 +1,32 @@
 import { NextResponse } from "next/server";
 
-import { markOrderFailed, settleOrderPaid } from "@/server/db/settle";
+import { route } from "@/server/http";
 import { sendOrderConfirmation } from "@/server/services/email.service";
-import { verifyWebhookSignature } from "@/server/services/payments.service";
+import { handleWebhook } from "@/server/services/orders.service";
 
 export const runtime = "nodejs";
 
-type RazorpayWebhook = {
-  event: string;
-  payload?: {
-    payment?: { entity?: { id?: string; order_id?: string } };
-  };
-};
-
 /**
- * The source of truth for payment state. /checkout/verify is only the fast
- * path for the shopper's own tab; if it never runs, this still settles.
+ * The source of truth for payment state. /checkout/verify is only the fast path
+ * for the shopper's own tab; if it never runs, this still settles.
+ *
+ * The raw text is read and handed over unparsed — the HMAC is over the exact
+ * bytes received, and re-serialised JSON would never match.
+ *
+ * Errors become non-2xx via `route`, which is what asks Razorpay to retry. That
+ * is the right answer for a transient fault and harmless for a repeat: the
+ * settle is idempotent, so a retried webhook takes no stock and sends no second
+ * email.
  */
-export async function POST(request: Request) {
-  const signature = request.headers.get("x-razorpay-signature");
-  if (!signature) {
-    return NextResponse.json({ error: "Unsigned." }, { status: 400 });
+export const POST = route("webhooks/razorpay", async (request: Request) => {
+  const result = await handleWebhook({
+    rawBody: await request.text(),
+    signature: request.headers.get("x-razorpay-signature"),
+  });
+
+  if (result.handled === "paid" && result.shouldSendConfirmation) {
+    await sendOrderConfirmation(result.orderId);
   }
 
-  // Raw body, verified before anything parses it. Re-serialising JSON changes
-  // the bytes and the HMAC would never match.
-  const raw = await request.text();
-
-  if (!verifyWebhookSignature(raw, signature)) {
-    return NextResponse.json({ error: "Signature mismatch." }, { status: 400 });
-  }
-
-  let event: RazorpayWebhook;
-  try {
-    event = JSON.parse(raw) as RazorpayWebhook;
-  } catch {
-    return NextResponse.json({ error: "Malformed payload." }, { status: 400 });
-  }
-
-  const entity = event.payload?.payment?.entity;
-  const razorpayOrderId = entity?.order_id;
-  const razorpayPaymentId = entity?.id;
-
-  // Signature was good, so acknowledge rather than make Razorpay retry.
-  if (!razorpayOrderId || !razorpayPaymentId) {
-    return NextResponse.json({ ok: true, ignored: event.event });
-  }
-
-  try {
-    switch (event.event) {
-      case "payment.captured": {
-        const result = await settleOrderPaid(razorpayOrderId, razorpayPaymentId);
-
-        /*
-         * Sent from here as well as from /checkout/verify, because either can
-         * be the one that settles: if the customer closes the tab after paying,
-         * verify never runs and this is the only path left.
-         *
-         * shouldSendConfirmation is claimed atomically inside the settle
-         * transaction, so of the two racing callers exactly one sends.
-         */
-        if (result.status === "paid" && result.shouldSendConfirmation) {
-          await sendOrderConfirmation(result.orderId);
-        }
-
-        return NextResponse.json({
-          ok: true,
-          status: result.status,
-          idempotent:
-            result.status === "paid" ? result.alreadySettled : undefined,
-        });
-      }
-      case "payment.failed": {
-        await markOrderFailed(razorpayOrderId, razorpayPaymentId);
-        return NextResponse.json({ ok: true, status: "failed" });
-      }
-      default:
-        return NextResponse.json({ ok: true, ignored: event.event });
-    }
-  } catch (error) {
-    console.error("[webhooks/razorpay]", error);
-    // 500 asks Razorpay to retry, which is what a transient fault deserves.
-    return NextResponse.json({ error: "Handler failed." }, { status: 500 });
-  }
-}
+  return NextResponse.json({ ok: true, ...result });
+});

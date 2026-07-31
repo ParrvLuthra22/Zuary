@@ -245,21 +245,31 @@ function unsubscribeUrl(email: string) {
   return `${emailOrigin()}/unsubscribe?email=${encodeURIComponent(email)}`;
 }
 
-export async function sendWaitlistWelcome({
-  email,
-  productSlug,
-}: {
-  email: string;
-  productSlug?: string;
-}) {
-  const product = productSlug ? getProduct(productSlug) : undefined;
+/**
+ * Email positional, because the address is the only thing this needs and every
+ * caller has one. `productSlug` is what the notify drawer knows and the footer
+ * signup does not, so it stays optional rather than forcing a null at one call
+ * site to satisfy the other.
+ */
+export async function sendWaitlistWelcome(
+  email: string,
+  options: { productSlug?: string } = {},
+) {
+  try {
+    const product = options.productSlug
+      ? getProduct(options.productSlug)
+      : undefined;
 
-  return sendEmail({
-    to: email,
-    subject: "You're on the list",
-    react: WaitlistWelcome({
-      productName: product?.name ?? null,
-      unsubscribeUrl: unsubscribeUrl(email),
-    }),
-  });
+    return await sendEmail({
+      to: email,
+      subject: "You're on the list",
+      react: WaitlistWelcome({
+        productName: product?.name ?? null,
+        unsubscribeUrl: unsubscribeUrl(email),
+      }),
+    });
+  } catch (error) {
+    console.error("[email] waitlist welcome failed", error);
+    return { ok: false };
+  }
 }

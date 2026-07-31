@@ -67,7 +67,14 @@ const eslintConfig = [
                * it at build time; this list is what makes it fail in the editor
                * first, with the offending line highlighted.
                */
-              group: ["@/server/db", "@/server/auth", "@/server/services"],
+              group: [
+                "@/server/db",
+                "@/server/auth",
+                "@/server/services",
+                "@/server/components",
+                "@/server/http",
+                "@/server/validators",
+              ],
               message:
                 "Client code cannot import from /server. Pass the data in as a prop from a server component, or call a server action from @/server/actions. Type-only imports are allowed.",
               allowTypeImports: true,
@@ -76,24 +83,6 @@ const eslintConfig = [
         },
       ],
     },
-  },
-  {
-    /*
-     * NavBar is the one server component filed under /client.
-     *
-     * It is not browser code — it has no "use client", it awaits auth() and
-     * hands three plain fields to <Nav />, which is the client component. It
-     * lives here because /client is the presentation layer in this layout and
-     * holds both RSCs and browser components, and because both route groups
-     * render it so it cannot sit inside either one.
-     *
-     * The rule above is directory-scoped and cannot tell an RSC from a client
-     * component, so the exemption is named rather than pattern-matched: one
-     * file, visible in the config. If a second file needs this, the layout is
-     * probably wrong and /client should be split by runtime instead.
-     */
-    files: ["client/components/layout/NavBar.tsx"],
-    rules: { "@typescript-eslint/no-restricted-imports": "off" },
   },
 ];
 

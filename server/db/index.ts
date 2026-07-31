@@ -56,3 +56,17 @@ export const db = new Proxy({} as ReturnType<typeof create>, {
 });
 
 export { schema };
+
+/**
+ * The transaction handle drizzle hands to a `db.transaction()` callback.
+ *
+ * Named here so services can take a `tx` parameter without every one of them
+ * re-deriving it from the callback signature. A service that accepts `Tx`
+ * declares it must be composed into a caller's transaction rather than opening
+ * its own — decrementStock is the case in point: taking the stock and marking
+ * the order paid have to commit together or not at all.
+ */
+export type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+/** Either a transaction or the pool. For helpers that work inside or outside. */
+export type Db = Tx | typeof db;

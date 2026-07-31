@@ -1,6 +1,6 @@
 import { OrdersTable } from "@/client/components/admin/OrdersTable";
 import { listOrdersForAdmin, type OrderFilter } from "@/server/db/queries";
-import { requireAdminPage } from "@/server/auth/guard";
+import { requireAdminPage } from "@/server/auth/guards";
 
 const VALID: OrderFilter[] = [
   "all",

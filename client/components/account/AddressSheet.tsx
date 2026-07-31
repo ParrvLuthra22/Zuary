@@ -58,7 +58,14 @@ export function AddressSheet({
         onOpenChange(false);
         return;
       }
-      setErrors(result.fieldErrors ?? {});
+      // The action returns every message per field; the form shows one.
+      setErrors(
+        Object.fromEntries(
+          Object.entries(result.fields ?? {}).flatMap(([field, messages]) =>
+            messages?.[0] ? [[field, messages[0]] as const] : [],
+          ),
+        ),
+      );
       toast(result.error);
     });
   }

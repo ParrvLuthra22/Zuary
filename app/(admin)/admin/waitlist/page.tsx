@@ -1,6 +1,6 @@
 import { WaitlistTable } from "@/client/components/admin/WaitlistTable";
 import { listWaitlistForAdmin } from "@/server/db/queries";
-import { requireAdminPage } from "@/server/auth/guard";
+import { requireAdminPage } from "@/server/auth/guards";
 
 export default async function AdminWaitlistPage() {
   // Authorisation before any query — see requireAdminPage.

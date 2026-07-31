@@ -4,43 +4,29 @@ import "server-only";
 
 import { revalidatePath } from "next/cache";
 
-import { auth } from "@/server/auth/config";
-import { savedAddressSchema } from "@/shared/validators/checkout";
+import { requireUser } from "@/server/auth/guards";
+import { parseInput } from "@/server/http";
 import {
-  createAddress,
+  addAddress,
   deleteAddress,
+  editAddress,
   setDefaultAddress,
-  updateAddress,
-} from "@/server/db/queries";
-
-export type ActionResult =
-  | { ok: true }
-  | { ok: false; error: string; fieldErrors?: Record<string, string> };
+} from "@/server/services/addresses.service";
+import { savedAddressSchema } from "@/shared/validators/checkout";
+import { fail, ok, type ActionResult } from "./result";
 
 /**
- * Every action here re-reads the session rather than trusting anything passed
- * in. A server action is a public POST endpoint — the userId must come from the
- * cookie, never from the form, or one customer can edit another's addresses by
- * changing a hidden field.
+ * Every action re-reads the session through requireUser rather than trusting
+ * anything passed in. A server action is a public POST endpoint — the userId
+ * must come from the cookie, never from the form, or one customer can edit
+ * another's addresses by changing a hidden field.
  */
-async function requireUserId() {
-  const session = await auth();
-  const id = session?.user?.id;
-  if (!id) throw new Error("UNAUTHENTICATED");
-  return id;
-}
 
-function fail(error: unknown): ActionResult {
-  if (error instanceof Error && error.message === "UNAUTHENTICATED") {
-    return { ok: false, error: "Your session expired. Sign in again." };
-  }
-  console.error("[addresses]", error);
-  return { ok: false, error: "Could not save that. Try again." };
-}
+export type AddressResult = ActionResult;
 
-/** Shared parse so create and update cannot validate differently. */
-function parse(formData: FormData) {
-  const parsed = savedAddressSchema.safeParse({
+/** Shared read so create and update cannot validate differently. */
+function fromForm(formData: FormData) {
+  return parseInput(savedAddressSchema, {
     label: formData.get("label") ?? "",
     fullName: formData.get("fullName") ?? "",
     phone: formData.get("phone") ?? "",
@@ -51,105 +37,57 @@ function parse(formData: FormData) {
     pincode: formData.get("pincode") ?? "",
     isDefault: formData.get("isDefault") === "on",
   });
-
-  if (parsed.success) return { data: parsed.data };
-
-  const fieldErrors: Record<string, string> = {};
-  for (const issue of parsed.error.issues) {
-    const key = String(issue.path[0] ?? "");
-    if (key && !fieldErrors[key]) fieldErrors[key] = issue.message;
-  }
-  return { fieldErrors };
 }
 
 export async function createAddressAction(
   formData: FormData,
-): Promise<ActionResult> {
+): Promise<AddressResult> {
   try {
-    const userId = await requireUserId();
-    const { data, fieldErrors } = parse(formData);
-    if (!data) {
-      return { ok: false, error: "Check the highlighted fields.", fieldErrors };
-    }
-
-    await createAddress({
-      userId,
-      label: data.label || null,
-      fullName: data.fullName,
-      phone: data.phone,
-      line1: data.line1,
-      line2: data.line2 || null,
-      city: data.city,
-      state: data.state,
-      pincode: data.pincode,
-      isDefault: Boolean(data.isDefault),
-    });
-
+    const user = await requireUser();
+    await addAddress(user.id, fromForm(formData));
     revalidatePath("/account/addresses");
-    return { ok: true };
+    return ok();
   } catch (error) {
-    return fail(error);
+    return fail(error, "addresses/create");
   }
 }
 
 export async function updateAddressAction(
   addressId: string,
   formData: FormData,
-): Promise<ActionResult> {
+): Promise<AddressResult> {
   try {
-    const userId = await requireUserId();
-    const { data, fieldErrors } = parse(formData);
-    if (!data) {
-      return { ok: false, error: "Check the highlighted fields.", fieldErrors };
-    }
-
-    const row = await updateAddress(addressId, userId, {
-      label: data.label || null,
-      fullName: data.fullName,
-      phone: data.phone,
-      line1: data.line1,
-      line2: data.line2 || null,
-      city: data.city,
-      state: data.state,
-      pincode: data.pincode,
-      isDefault: Boolean(data.isDefault),
-    });
-
-    // Nothing updated means the row is not this user's, or is gone. Same answer
-    // either way — we do not confirm that someone else's id exists.
-    if (!row) return { ok: false, error: "That address is no longer there." };
-
+    const user = await requireUser();
+    await editAddress(addressId, user.id, fromForm(formData));
     revalidatePath("/account/addresses");
-    return { ok: true };
+    return ok();
   } catch (error) {
-    return fail(error);
+    return fail(error, "addresses/update");
   }
 }
 
 export async function deleteAddressAction(
   addressId: string,
-): Promise<ActionResult> {
+): Promise<AddressResult> {
   try {
-    const userId = await requireUserId();
-    const removed = await deleteAddress(addressId, userId);
-    if (!removed) return { ok: false, error: "That address is no longer there." };
+    const user = await requireUser();
+    await deleteAddress(addressId, user.id);
     revalidatePath("/account/addresses");
-    return { ok: true };
+    return ok();
   } catch (error) {
-    return fail(error);
+    return fail(error, "addresses/delete");
   }
 }
 
 export async function setDefaultAddressAction(
   addressId: string,
-): Promise<ActionResult> {
+): Promise<AddressResult> {
   try {
-    const userId = await requireUserId();
-    const row = await setDefaultAddress(addressId, userId);
-    if (!row) return { ok: false, error: "That address is no longer there." };
+    const user = await requireUser();
+    await setDefaultAddress(addressId, user.id);
     revalidatePath("/account/addresses");
-    return { ok: true };
+    return ok();
   } catch (error) {
-    return fail(error);
+    return fail(error, "addresses/setDefault");
   }
 }

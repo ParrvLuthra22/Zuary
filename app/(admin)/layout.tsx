@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 
 import { AdminSidebar, AdminSignOut } from "@/client/components/admin/AdminNav";
-import { NotAdminError, requireAdmin } from "@/server/auth/guard";
+import { requireAdminPage } from "@/server/auth/guards";
 
 export const metadata: Metadata = {
   title: "ZUARY admin",
@@ -28,13 +27,9 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  let admin;
-  try {
-    admin = await requireAdmin();
-  } catch (error) {
-    if (error instanceof NotAdminError) notFound();
-    throw error;
-  }
+  // requireAdminPage is requireAdmin with the 404 conversion folded in, so the
+  // layout and every page under it refuse the same way.
+  const admin = await requireAdminPage();
 
   return (
     <div className="min-h-screen bg-bg text-fg">

@@ -9,7 +9,7 @@ import { getOrderForAdmin } from "@/server/db/queries";
 import type { OrderStatus } from "@/server/db/schema";
 import { shortOrderId } from "@/shared/utils/order-number";
 import { cn, formatINR } from "@/shared/utils";
-import { requireAdminPage } from "@/server/auth/guard";
+import { requireAdminPage } from "@/server/auth/guards";
 
 const STAMP = new Intl.DateTimeFormat("en-IN", {
   day: "2-digit",

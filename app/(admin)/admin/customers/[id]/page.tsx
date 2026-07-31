@@ -7,7 +7,7 @@ import {
 } from "@/server/db/queries";
 import { shortOrderId } from "@/shared/utils/order-number";
 import { formatINR } from "@/shared/utils";
-import { requireAdminPage } from "@/server/auth/guard";
+import { requireAdminPage } from "@/server/auth/guards";
 
 const DATE = new Intl.DateTimeFormat("en-IN", {
   day: "2-digit",

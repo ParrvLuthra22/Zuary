@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 
 import { ImageManager } from "@/client/components/admin/ImageManager";
 import { ProductForm } from "@/client/components/admin/ProductForm";
-import { requireAdminPage } from "@/server/auth/guard";
+import { requireAdminPage } from "@/server/auth/guards";
 import { getProductRow } from "@/server/db/queries/catalogue";
 import { listImagesForAdmin } from "@/server/db/queries";
 

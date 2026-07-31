@@ -3,45 +3,41 @@
 import "server-only";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
-import { auth } from "@/server/auth/config";
+import { requireUser } from "@/server/auth/guards";
+import { parseInput } from "@/server/http";
+import { toggleWishlist } from "@/server/services/wishlist.service";
 import { PRODUCTS } from "@/shared/constants/products";
-import { toggleWishlist } from "@/server/db/queries";
+import { fail, ok, type ActionResult } from "./result";
 
-const SLUGS = new Set(PRODUCTS.map((p) => p.slug));
+// Checked against the real catalogue before it reaches the database: the
+// wishlist table stores a slug rather than a foreign key, so without this
+// anyone could POST arbitrary strings into their own rows.
+const slugSchema = z.enum(PRODUCTS.map((p) => p.slug) as [string, ...string[]]);
 
-export type ToggleResult =
-  | { ok: true; saved: boolean }
-  | { ok: false; reason: "unauthenticated" | "error" };
+export type ToggleResult = ActionResult<{ saved: boolean }>;
 
 /**
  * Flips one product in the signed-in customer's wishlist.
  *
- * Returns `unauthenticated` rather than redirecting: the caller is a button
- * inside a product card, and it knows the path it wants to come back to. A
- * redirect from here would send people to /login with no `next`.
- *
- * The slug is checked against the catalogue before it reaches the database —
- * the wishlist table stores a slug rather than a foreign key, so without this
- * anyone could POST arbitrary strings into their own rows.
+ * Returns a failed result rather than redirecting when signed out: the caller
+ * is a button inside a product card and it knows the path it wants to come back
+ * to. A redirect from here would send people to /login with no `next`. The
+ * client branches on `code === "UNAUTHORIZED"`.
  */
 export async function toggleWishlistAction(
   productSlug: string,
 ): Promise<ToggleResult> {
-  const session = await auth();
-  const userId = session?.user?.id;
-  if (!userId) return { ok: false, reason: "unauthenticated" };
-
-  if (!SLUGS.has(productSlug as never)) {
-    return { ok: false, reason: "error" };
-  }
-
   try {
-    const { saved } = await toggleWishlist(userId, productSlug);
+    const user = await requireUser();
+    const slug = parseInput(slugSchema, productSlug);
+
+    const { saved } = await toggleWishlist(user.id, slug);
+
     revalidatePath("/account/wishlist");
-    return { ok: true, saved };
+    return ok({ saved });
   } catch (error) {
-    console.error("[wishlist]", error);
-    return { ok: false, reason: "error" };
+    return fail(error, "wishlist/toggle");
   }
 }

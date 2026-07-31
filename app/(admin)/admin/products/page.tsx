@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { requireAdminPage } from "@/server/auth/guard";
+import { requireAdminPage } from "@/server/auth/guards";
 import { listProductsForAdmin } from "@/server/db/queries";
 import { formatINR } from "@/shared/utils";
 

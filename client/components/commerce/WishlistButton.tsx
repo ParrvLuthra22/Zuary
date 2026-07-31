@@ -53,11 +53,14 @@ export function WishlistButton({
       const result = await toggleWishlistAction(slug);
 
       if (!result.ok) {
-        if (result.reason === "unauthenticated") {
+        // A session can expire between render and click, so the signedIn check
+        // above is not the last word — the server's answer is.
+        if (result.code === "UNAUTHORIZED") {
           router.push(`/login?next=${encodeURIComponent(pathname)}`);
           return;
         }
-        toast("Could not update your wishlist.");
+        setOptimistic(optimistic);
+        toast(result.error);
       }
     });
   }

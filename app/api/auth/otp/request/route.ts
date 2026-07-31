@@ -1,11 +1,10 @@
-import { hash } from "bcryptjs";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { OTP_TTL_MS, generateCode, phoneRegex, sendOtp } from "@/server/auth/otp";
-import { db } from "@/server/db";
-import { otpCodes } from "@/server/db/schema";
-import { clientIp, rateLimit } from "@/server/services/rate-limit.service";
+import { phoneRegex } from "@/server/auth/otp";
+import { limit, parseJson, route } from "@/server/http";
+import { issueOtp } from "@/server/services/otp.service";
+import { clientIp } from "@/server/services/rate-limit.service";
 
 export const runtime = "nodejs";
 
@@ -13,66 +12,30 @@ const schema = z.object({
   phone: z.string().regex(phoneRegex, "Ten digits, starting 6-9."),
 });
 
+const TOO_MANY = "Too many codes requested. Try again shortly.";
+
 /**
  * Issues an OTP.
  *
  * Always answers { ok: true } once the input is well-formed — including for a
- * number that has never been seen. Distinguishing "sent" from "no such user"
- * turns this endpoint into a way to enumerate which phone numbers hold accounts,
- * which is exactly the list a credential-stuffer wants.
+ * number that has never been seen, and including when the write or the send
+ * failed. Distinguishing those cases turns this endpoint into a way to
+ * enumerate which phone numbers hold accounts.
  */
-export async function POST(request: Request) {
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Malformed request." }, { status: 400 });
-  }
-
-  const parsed = schema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: parsed.error.issues[0]?.message ?? "Invalid phone." },
-      { status: 422 },
-    );
-  }
-  const { phone } = parsed.data;
+export const POST = route("otp/request", async (request: Request) => {
+  const { phone } = await parseJson(request, schema);
 
   /* Two buckets. Per-phone stops one number being spammed with texts, which
      costs us money and annoys whoever owns it. Per-IP stops one machine
      cycling through numbers to do the same at scale. */
-  const byPhone = await rateLimit("otp-request-phone", phone);
-  if (byPhone.limited) {
-    return NextResponse.json(
-      { error: "Too many codes requested. Try again shortly." },
-      { status: 429, headers: { "Retry-After": String(byPhone.retryAfterSec) } },
-    );
-  }
-  const byIp = await rateLimit("otp-request-ip", clientIp(request));
-  if (byIp.limited) {
-    return NextResponse.json(
-      { error: "Too many codes requested. Try again shortly." },
-      { status: 429, headers: { "Retry-After": String(byIp.retryAfterSec) } },
-    );
-  }
+  const limited =
+    (await limit("otp-request-phone", phone, TOO_MANY)) ??
+    (await limit("otp-request-ip", clientIp(request), TOO_MANY));
+  if (limited) return limited;
 
-  try {
-    const code = generateCode();
-    // Only the hash is stored. A dump of otp_codes cannot be replayed to sign
-    // in as anyone.
-    const codeHash = await hash(code, 10);
+  // Swallowed on purpose — see above. An error here must not become a signal
+  // either, so it is logged and the answer stays identical.
+  await issueOtp(phone).catch((error) => console.error("[otp/request]", error));
 
-    await db.insert(otpCodes).values({
-      phone,
-      codeHash,
-      expiresAt: new Date(Date.now() + OTP_TTL_MS),
-    });
-
-    await sendOtp(phone, code);
-    return NextResponse.json({ ok: true });
-  } catch (error) {
-    console.error("[otp/request]", error);
-    // Still generic: an error here must not become a signal either.
-    return NextResponse.json({ ok: true });
-  }
-}
+  return NextResponse.json({ ok: true });
+});

@@ -1,6 +1,6 @@
 import { CustomersTable } from "@/client/components/admin/CustomersTable";
 import { listCustomersForAdmin, type CustomerSort } from "@/server/db/queries";
-import { requireAdminPage } from "@/server/auth/guard";
+import { requireAdminPage } from "@/server/auth/guards";
 
 const VALID: CustomerSort[] = ["spent", "orders", "joined"];
 

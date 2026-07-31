@@ -1,5 +1,5 @@
 import { StockGrid } from "@/client/components/admin/StockGrid";
-import { requireAdminPage } from "@/server/auth/guard";
+import { requireAdminPage } from "@/server/auth/guards";
 import { listStockGrid } from "@/server/db/queries";
 
 export default async function AdminStockPage() {

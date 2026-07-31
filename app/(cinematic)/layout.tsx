@@ -1,7 +1,7 @@
 import { CartSheet } from "@/client/components/commerce/CartSheet";
 import { NotifyDrawer } from "@/client/components/commerce/NotifyDrawer";
 import { Footer } from "@/client/components/layout/Footer";
-import { NavBar } from "@/client/components/layout/NavBar";
+import { NavBar } from "@/server/components/NavBar";
 
 /**
  * Nav and Footer as everywhere else, but no top padding: the cinematic group's

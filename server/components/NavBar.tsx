@@ -1,3 +1,5 @@
+import "server-only";
+
 import { auth } from "@/server/auth/config";
 import { Nav } from "@/client/components/layout/Nav";
 
