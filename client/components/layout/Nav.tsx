@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import type Lenis from "lenis";
 import { Menu, Search, ShoppingBag, X } from "lucide-react";
+import { track } from "@/client/lib/track";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -42,7 +43,11 @@ export function Nav({ account }: { account: NavAccount | null }) {
   const lenis = useLenis();
   const count = useCartCount();
 
-  const openCart = useUIStore((s) => s.openCart);
+  const openCartRaw = useUIStore((s) => s.openCart);
+  const openCart = () => {
+    openCartRaw();
+    track("cart_opened");
+  };
   const mobileNavOpen = useUIStore((s) => s.mobileNavOpen);
   const setMobileNavOpen = useUIStore((s) => s.setMobileNavOpen);
 

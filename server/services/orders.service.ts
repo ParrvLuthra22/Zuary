@@ -18,6 +18,7 @@ import {
   PaymentError,
   ValidationError,
 } from "@/shared/errors";
+import { withPaymentContext } from "@/server/observability";
 import { auditLog } from "./admin.service";
 import { decrementStock, getPricedVariants } from "./inventory.service";
 import {
@@ -124,12 +125,17 @@ export async function createOrder(input: {
 
   let rzpOrder;
   try {
-    rzpOrder = await razorpay().orders.create({
-      amount: toPaise(totalInr),
-      currency: RAZORPAY_CURRENCY,
-      receipt: order.id,
-      notes: { ourOrderId: order.id, email: input.contact.email },
-    });
+    rzpOrder = await withPaymentContext(
+      "createOrder",
+      { orderId: order.id, totalInr },
+      () =>
+        razorpay().orders.create({
+          amount: toPaise(totalInr),
+          currency: RAZORPAY_CURRENCY,
+          receipt: order.id,
+          notes: { ourOrderId: order.id, email: input.contact.email },
+        }),
+    );
   } catch (error) {
     // Razorpay's own message names internal fields and is written for
     // developers, so it is logged and not repeated to the customer.
@@ -290,6 +296,23 @@ export async function verifyPayment(input: {
   signature: string;
   userId: string;
 }): Promise<SettleResult> {
+  return withPaymentContext(
+    "verifyPayment",
+    {
+      orderId: input.orderId,
+      razorpayOrderId: input.razorpayOrderId,
+      razorpayPaymentId: input.razorpayPaymentId,
+    },
+    () => runVerifyPayment(input),
+  );
+}
+
+async function runVerifyPayment(input: {
+  razorpayOrderId: string;
+  razorpayPaymentId: string;
+  signature: string;
+  userId: string;
+}): Promise<SettleResult> {
   const [owner] = await db
     .select({ id: orders.id, userId: orders.userId })
     .from(orders)
@@ -336,6 +359,13 @@ export type WebhookResult =
  * payment already settled takes no stock and sends no second email.
  */
 export async function handleWebhook(input: {
+  rawBody: string;
+  signature: string | null;
+}): Promise<WebhookResult> {
+  return withPaymentContext("handleWebhook", {}, () => runWebhook(input));
+}
+
+async function runWebhook(input: {
   rawBody: string;
   signature: string | null;
 }): Promise<WebhookResult> {

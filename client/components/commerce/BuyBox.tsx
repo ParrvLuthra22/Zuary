@@ -1,7 +1,7 @@
 "use client";
 
 import { MapPin, RotateCcw, Truck } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import {
@@ -22,6 +22,7 @@ import {
 import { SIZES, SIZE_GUIDE, type Product, type Size } from "@/shared/constants/products";
 import { flyToCart } from "@/shared/motion/fly-to-cart";
 import { cn, formatINR, seriesLabel } from "@/shared/utils";
+import { track } from "@/client/lib/track";
 import { useCartStore } from "@/client/stores/cart";
 import { useUIStore } from "@/client/stores/ui";
 
@@ -37,17 +38,34 @@ export function BuyBox({ product, stock }: BuyBoxProps) {
   const add = useCartStore((s) => s.add);
   const openCart = useUIStore((s) => s.openCart);
 
+  /* One event per product, not per render. The slug is the dependency so a
+     client-side navigation between two PDPs still counts as two views. */
+  useEffect(() => {
+    track("product_viewed", { slug: product.slug, price: product.price });
+  }, [product.slug, product.price]);
+
   const inStock = (s: Size) => {
     if (!product.sizes.includes(s)) return false;
     if (!stock) return true;
     return (stock[s] ?? 0) > 0;
   };
 
+  function selectSize(next: Size) {
+    setSize(next);
+    track("size_selected", { slug: product.slug, size: next });
+  }
+
   function addToBag() {
     if (!size || !inStock(size)) return;
     flyToCart(document.querySelector<HTMLElement>('[data-gallery-frame="0"]'));
     add(product.slug, size, 1);
+    track("add_to_cart", {
+      slug: product.slug,
+      size,
+      price: product.price,
+    });
     openCart();
+    track("cart_opened");
     toast(`${product.name} · ${size} added to bag.`);
   }
 
@@ -60,7 +78,7 @@ export function BuyBox({ product, stock }: BuyBoxProps) {
             key={s}
             type="button"
             disabled={!available}
-            onClick={() => setSize(s)}
+            onClick={() => selectSize(s)}
             aria-pressed={size === s}
             aria-label={available ? `Size ${s}` : `Size ${s}, sold out`}
             className={cn(

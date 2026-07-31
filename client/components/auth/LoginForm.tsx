@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Phone } from "lucide-react";
+import { track } from "@/client/lib/track";
 import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -56,6 +57,7 @@ export function LoginForm({
     try {
       // redirect:false so a send failure surfaces inline instead of bouncing to
       // the generic error page.
+      track("login_completed", { method: "email" });
       const result = await signIn("resend", {
         email: values.email,
         redirectTo: next,
@@ -86,6 +88,7 @@ export function LoginForm({
         disabled={googlePending}
         onClick={() => {
           setGooglePending(true);
+          track("login_completed", { method: "google" });
           void signIn("google", { redirectTo: next });
         }}
         className={cn(

@@ -1,6 +1,7 @@
 "use client";
 
 import { signIn } from "next-auth/react";
+import { track } from "@/client/lib/track";
 import { useEffect, useRef, useState } from "react";
 
 import { ButtonZ } from "@/client/components/ui/button-z";
@@ -70,6 +71,7 @@ export function PhoneOtpPanel({ next }: { next: string }) {
         return;
       }
       // The ticket, never the phone — see lib/auth/otp.ts.
+      track("login_completed", { method: "phone" });
       await signIn("phone-otp", { ticket: data.ticket, redirectTo: next });
     } catch {
       setError("Network error. Try again.");

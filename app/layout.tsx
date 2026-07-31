@@ -1,3 +1,5 @@
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata, Viewport } from "next";
 import { Eczar, Inter, Inter_Tight, JetBrains_Mono } from "next/font/google";
 
@@ -93,6 +95,10 @@ export default function RootLayout({
           <CartAnnouncer />
           <Toaster />
         </ThemeProvider>
+        {/* Both are no-ops off Vercel and add nothing to the critical path —
+            they mount after hydration and defer their own scripts. */}
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

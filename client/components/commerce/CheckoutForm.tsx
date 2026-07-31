@@ -5,7 +5,7 @@ import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Script from "next/script";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { signOut } from "next-auth/react";
 import { toast } from "sonner";
@@ -35,6 +35,7 @@ import {
   useCartStore,
 } from "@/client/stores/cart";
 import type { Address } from "@/server/db/schema";
+import { paymentFailureReason, track } from "@/client/lib/track";
 import type { RazorpayCheckoutResponse } from "@/shared/types/razorpay";
 
 type Step = "contact" | "shipping" | "payment";
@@ -219,6 +220,16 @@ function CheckoutFormInner({
     if (defaultAddress) applySaved(defaultAddress);
   }, [defaultAddress, applySaved]);
 
+  /* Fires once per visit to checkout with a non-empty bag. `started` is a ref
+     rather than state so a re-render from the validation poll cannot double
+     count, and an empty bag is not a started checkout. */
+  const startedRef = useRef(false);
+  useEffect(() => {
+    if (startedRef.current || items.length === 0) return;
+    startedRef.current = true;
+    track("checkout_started", { itemCount: items.length, subtotal });
+  }, [items.length, subtotal]);
+
   async function onSubmit(values: CheckoutFormInput) {
     if (items.length === 0) {
       toast("Your bag is empty.");
@@ -229,6 +240,9 @@ function CheckoutFormInner({
       return;
     }
     const Checkout = window.Razorpay;
+
+    // The form validated and we are about to ask for money.
+    track("address_submitted");
 
     setSubmitting(true);
     setStep("payment");
@@ -254,11 +268,13 @@ function CheckoutFormInner({
         // Session died between page load and pay. Send them to sign in and
         // come straight back; the cart is in localStorage and survives.
         toast("Sign in to complete your order.");
+        track("login_required_shown");
         router.push("/login?next=%2Fcheckout");
         return;
       }
       if (!res.ok) {
-        toast(data.error ?? "Could not start checkout.");
+        track("payment_failed", { reason: paymentFailureReason(data) });
+        toast(data.message ?? data.error ?? "Could not start checkout.");
         setStep("shipping");
         return;
       }
@@ -288,6 +304,7 @@ function CheckoutFormInner({
           ondismiss: () => {
             setSubmitting(false);
             setStep("shipping");
+            track("payment_failed", { reason: "dismissed" });
             toast("Payment cancelled. Your bag is untouched.");
           },
         },
@@ -300,19 +317,32 @@ function CheckoutFormInner({
           const verified = await verify.json().catch(() => ({}));
 
           if (!verify.ok || !verified.ok) {
-            // The webhook is the source of truth, so send them to the order
-            // page anyway — it polls until the status settles.
+            /* Not necessarily a lost payment — the webhook is the source of
+               truth and may still settle it. Recorded as a failure of THIS
+               path so the funnel shows how often the fast path loses the race,
+               then the customer goes to the order page, which polls. */
+            track("payment_failed", {
+              reason: paymentFailureReason(verified),
+            });
             router.push(`/orders/${data.ourOrderId}`);
             return;
           }
 
+          track("payment_completed", {
+            orderId: verified.orderId,
+            total: data.amount / 100,
+          });
           clear();
           router.push(`/orders/${verified.orderId}`);
         },
       });
 
+      // The modal is about to take over. `amount` is paise from our own
+      // server, which is the figure actually being charged.
+      track("payment_initiated", { total: data.amount / 100 });
       checkout.open();
-    } catch {
+    } catch (error) {
+      track("payment_failed", { reason: paymentFailureReason(error) });
       toast("Network error. Try again.");
       setStep("shipping");
     } finally {

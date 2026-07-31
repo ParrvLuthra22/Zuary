@@ -73,7 +73,7 @@ export function HeroScrub({
   const imagesRef = useRef<HTMLImageElement[]>([]);
   const lastDrawn = useRef(-1);
 
-  const wordmarkRef = useRef<HTMLDivElement>(null);
+  const wordmarkRef = useRef<HTMLHeadingElement>(null);
   const engineeredRef = useRef<HTMLDivElement>(null);
   const specRef = useRef<HTMLUListElement>(null);
   const outroRef = useRef<HTMLDivElement>(null);
@@ -346,12 +346,17 @@ export function HeroScrub({
         ) : null}
 
         <div className="relative z-10 flex h-full flex-col items-center justify-center gap-6 px-6 text-center">
-          <p className="t-display-xl text-fg">
+          {/* h1, not p. The homepage had no level-1 heading at all, which
+              leaves screen-reader users and crawlers with no document heading
+              on the single most important page. The wordmark IS the heading —
+              styling is entirely in the class, so the tag change is
+              layout-neutral. */}
+          <h1 className="t-display-xl text-fg">
             ZU
             <TriangleA className="mx-[0.06em]" />
             <span className="sr-only">A</span>
             RY
-          </p>
+          </h1>
           <p className="t-label text-fg-muted">Engineered fit</p>
           <HeroCta product={product} />
         </div>
@@ -403,7 +408,11 @@ export function HeroScrub({
 
         {/* Overlay */}
         <div className="relative z-10 h-full">
-          <div
+          {/* See the reduced-motion branch: this is the page's h1. Starting at
+              opacity 0 is fine — it stays in the accessibility tree and in the
+              markup crawlers read, and GSAP animates the same property whether
+              this is a div or an h1. */}
+          <h1
             ref={wordmarkRef}
             className="t-display-xl absolute inset-0 flex items-center justify-center text-fg"
             style={{ opacity: 0 }}
@@ -412,7 +421,7 @@ export function HeroScrub({
             <TriangleA className="mx-[0.06em]" />
             <span className="sr-only">A</span>
             RY
-          </div>
+          </h1>
 
           <div
             ref={engineeredRef}

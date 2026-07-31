@@ -1,0 +1,101 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+# A second push supersedes the first; no point finishing a run for a commit
+# nobody is looking at any more.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: typecheck · lint · unit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+        env:
+          # The build must not need real credentials. Anything that does is a
+          # module doing work at import time, which is worth failing over.
+          SKIP_ENV_VALIDATION: "true"
+
+  e2e:
+    name: end-to-end
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Only where a test database exists. A fork's PR has no secrets, and a
+    # required check that can never pass there blocks every outside
+    # contribution.
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Prepare the test database
+        # Guarded rather than assumed: without a DATABASE_URL these specs fail
+        # on a connection error, which reads like a broken test rather than a
+        # missing secret.
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::warning::E2E_DATABASE_URL is not set — skipping the e2e suite."
+            echo "skip=true" >> "$GITHUB_ENV"
+            exit 0
+          fi
+          npm run db:push
+          npm run db:seed
+          npm run seed:e2e | tee /tmp/seed.log
+          grep -o 'E2E_PAID_ORDER_ID=.*' /tmp/seed.log >> "$GITHUB_ENV" || true
+          grep -o 'E2E_FOREIGN_ORDER_ID=.*' /tmp/seed.log >> "$GITHUB_ENV" || true
+        env:
+          DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
+
+      - name: Run Playwright
+        if: env.skip != 'true'
+        run: npm run test:e2e
+        env:
+          DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
+          AUTH_SECRET: ${{ secrets.E2E_AUTH_SECRET }}
+          AUTH_TRUST_HOST: "true"
+          RAZORPAY_KEY_ID: ${{ secrets.RAZORPAY_TEST_KEY_ID }}
+          RAZORPAY_KEY_SECRET: ${{ secrets.RAZORPAY_TEST_KEY_SECRET }}
+          RAZORPAY_WEBHOOK_SECRET: ${{ secrets.RAZORPAY_TEST_WEBHOOK_SECRET }}
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

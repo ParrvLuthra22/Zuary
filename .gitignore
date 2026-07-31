@@ -40,3 +40,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/backups/
+
+# Claude Code writes these atomically; the temp file can race a git add.
+.claude/*.tmp.*

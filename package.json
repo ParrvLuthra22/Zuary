@@ -13,7 +13,12 @@
     "db:seed": "tsx --env-file=.env.local scripts/seed.ts",
     "typecheck": "tsc --noEmit",
     "email:dev": "email dev --dir ./emails",
-    "db:seed-images": "tsx --env-file=.env.local scripts/seed-images.ts"
+    "db:seed-images": "tsx --env-file=.env.local scripts/seed-images.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "seed:e2e": "tsx --env-file=.env.local scripts/seed-e2e.ts",
+    "backup": "tsx --env-file=.env.local scripts/backup-db.ts"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.3",
@@ -22,9 +27,12 @@
     "@neondatabase/serverless": "^1.1.0",
     "@paralleldrive/cuid2": "^3.3.0",
     "@react-email/components": "^1.0.12",
+    "@sentry/nextjs": "^10.69.0",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.38.0",
+    "@vercel/analytics": "^2.0.1",
     "@vercel/blob": "^2.6.1",
+    "@vercel/speed-insights": "^2.0.0",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "client-only": "^0.0.1",
@@ -53,6 +61,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@playwright/test": "^1.62.1",
     "@react-email/ui": "^6.9.1",
     "@tailwindcss/postcss": "^4",
     "@types/bcryptjs": "^2.4.6",
@@ -66,6 +75,7 @@
     "sharp": "^0.35.3",
     "tailwindcss": "^4",
     "tsx": "^4.23.1",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.10"
   }
 }
