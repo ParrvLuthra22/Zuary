@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { addToWaitlist } from "@/lib/db/queries";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { sendWaitlistWelcome } from "@/lib/email/waitlist";
 
 export const runtime = "nodejs";
@@ -15,48 +16,15 @@ const schema = z.object({
   size: z.enum(["S", "M", "L", "XL"]).optional(),
 });
 
-const WINDOW_MS = 10 * 60 * 1000;
-const MAX_PER_WINDOW = 5;
-
-/**
- * Per-instance rate limit. Good enough to stop a form being hammered from one
- * machine; it does not survive a restart and is not shared between serverless
- * instances, so it is a speed bump rather than a real quota.
- */
-const hits = new Map<string, number[]>();
-
-function rateLimited(ip: string) {
-  const now = Date.now();
-  const recent = (hits.get(ip) ?? []).filter((t) => now - t < WINDOW_MS);
-
-  if (recent.length >= MAX_PER_WINDOW) {
-    hits.set(ip, recent);
-    return true;
-  }
-
-  recent.push(now);
-  hits.set(ip, recent);
-
-  // Opportunistic sweep so the map cannot grow without bound.
-  if (hits.size > 5000) {
-    for (const [key, times] of hits) {
-      if (times.every((t) => now - t >= WINDOW_MS)) hits.delete(key);
-    }
-  }
-  return false;
-}
-
-function clientIp(request: Request) {
-  const forwarded = request.headers.get("x-forwarded-for");
-  if (forwarded) return forwarded.split(",")[0].trim();
-  return request.headers.get("x-real-ip") ?? "unknown";
-}
-
 export async function POST(request: Request) {
-  if (rateLimited(clientIp(request))) {
+  const limit = await rateLimit("waitlist", clientIp(request));
+  if (limit.limited) {
     return NextResponse.json(
       { error: "Too many sign-ups. Try again in a few minutes." },
-      { status: 429, headers: { "Retry-After": "600" } },
+      {
+        status: 429,
+        headers: { "Retry-After": String(limit.retryAfterSec) },
+      },
     );
   }
 

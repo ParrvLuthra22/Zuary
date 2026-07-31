@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { getOrderWithItems } from "@/lib/db/queries";
+import { auth } from "@/auth";
+import { getOrderForUser } from "@/lib/db/queries";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -8,8 +9,17 @@ export const dynamic = "force-dynamic";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
- * Status only. The confirmation page polls this while the webhook and the
- * redirect race each other; it deliberately returns nothing identifying.
+ * Order status, for the confirmation page to poll while the webhook and the
+ * browser redirect race each other.
+ *
+ * Scoped to the session. It previously answered for any valid uuid with no
+ * session at all — the body is only `{ status }`, but that still let anyone
+ * holding an id (from a shared link, a browser history, a support thread) watch
+ * a stranger's order move through paid and shipped. Ownership now lives in the
+ * query, so another customer's id and a nonexistent one are indistinguishable.
+ *
+ * Safe to require a session here: payment has required an account since B04, so
+ * anyone legitimately polling this is signed in.
  */
 export async function GET(
   _request: Request,
@@ -20,8 +30,14 @@ export async function GET(
     return NextResponse.json({ error: "Not found." }, { status: 404 });
   }
 
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) {
+    return NextResponse.json({ error: "Not found." }, { status: 404 });
+  }
+
   try {
-    const order = await getOrderWithItems(id);
+    const order = await getOrderForUser(id, userId);
     if (!order) {
       return NextResponse.json({ error: "Not found." }, { status: 404 });
     }

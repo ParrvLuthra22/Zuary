@@ -7,6 +7,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
+import { PhoneOtpPanel } from "@/components/auth/PhoneOtpPanel";
 import { ButtonZ } from "@/components/ui/button-z";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -39,6 +40,7 @@ export function LoginForm({
     initialError ? (ERROR_COPY[initialError] ?? GENERIC) : "",
   );
   const [googlePending, setGooglePending] = useState(false);
+  const [showPhone, setShowPhone] = useState(false);
 
   const {
     register,
@@ -102,19 +104,24 @@ export function LoginForm({
         {googlePending ? "Redirecting…" : "Continue with Google"}
       </button>
 
+      {/* Rendered only when the flag is on. The server decides — see the
+          login page — so with it off the panel is absent from the markup
+          entirely rather than shipped and hidden. */}
       {phoneEnabled ? (
-        <ButtonZ
-          type="button"
-          size="lg"
-          variant="outline"
-          className="mt-3 h-14 w-full"
-          asChild
-        >
-          <a href={`/login/phone?next=${encodeURIComponent(next)}`}>
+        showPhone ? (
+          <PhoneOtpPanel next={next} />
+        ) : (
+          <ButtonZ
+            type="button"
+            size="lg"
+            variant="outline"
+            className="mt-3 h-14 w-full"
+            onClick={() => setShowPhone(true)}
+          >
             <Phone className="size-4" />
             Continue with phone
-          </a>
-        </ButtonZ>
+          </ButtonZ>
+        )
       ) : null}
 
       {/* Hairline with the label sitting on it. */}

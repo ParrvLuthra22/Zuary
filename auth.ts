@@ -2,10 +2,13 @@ import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { eq, sql } from "drizzle-orm";
 import NextAuth from "next-auth";
 import type { Adapter } from "next-auth/adapters";
+import Credentials from "next-auth/providers/credentials";
 import Resend from "next-auth/providers/resend";
 
 import authConfig from "./auth.config";
 import { MagicLink } from "@/emails/MagicLink";
+import { verifyTicket } from "@/lib/auth/otp";
+import { rateLimit } from "@/lib/rate-limit";
 import { sendEmail } from "@/lib/email/send";
 import { db, getDb } from "@/lib/db";
 import {
@@ -179,6 +182,61 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
    */
   providers: [
     ...authConfig.providers,
+    Credentials({
+      id: "phone-otp",
+      name: "Phone",
+      credentials: { ticket: { type: "text" } },
+      async authorize(raw) {
+        const ticket = typeof raw?.ticket === "string" ? raw.ticket : "";
+        const claim = verifyTicket(ticket);
+        if (!claim) return null;
+
+        /* Find-or-create by phone, and stamp phoneVerified — reaching here
+           means a code sent to that number was entered correctly. */
+        try {
+          const [existing] = await db
+            .select()
+            .from(users)
+            .where(eq(users.phone, claim.phone))
+            .limit(1);
+
+          if (existing) {
+            await db
+              .update(users)
+              .set({ phoneVerified: new Date() })
+              .where(eq(users.id, existing.id));
+            return {
+              id: existing.id,
+              email: existing.email,
+              name: existing.name,
+              role: existing.role,
+            };
+          }
+
+          /* No email yet. The users table requires one and it is unique, so a
+             placeholder derived from the phone keeps the row valid until they
+             add a real address. Never emailed. */
+          const [created] = await db
+            .insert(users)
+            .values({
+              email: `phone+${claim.phone}@users.zuary.in`,
+              phone: claim.phone,
+              phoneVerified: new Date(),
+            })
+            .returning();
+
+          return {
+            id: created.id,
+            email: created.email,
+            name: created.name,
+            role: created.role,
+          };
+        } catch (error) {
+          console.error("[auth] phone sign-in failed", error);
+          return null;
+        }
+      },
+    }),
     Resend({
       from: process.env.EMAIL_FROM,
       /*
@@ -189,6 +247,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
        * page. The token is single-use either way.
        */
       async sendVerificationRequest({ identifier, url, provider }) {
+        /* Five links per address per hour. Without this the form is a free
+           mailer: anyone can type a stranger's address repeatedly and fill
+           their inbox from our domain, which is how a sender reputation dies. */
+        const limit = await rateLimit("magic-link", identifier.toLowerCase());
+        if (limit.limited) {
+          console.warn("[auth] magic link rate limited", identifier);
+          // Returning quietly rather than throwing: Auth.js treats a throw as a
+          // failed sign-in and shows an error page, which tells a prober that
+          // this address is being throttled.
+          return;
+        }
+
         const host = new URL(url).host;
         const result = await sendEmail({
           to: identifier,
@@ -204,6 +274,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
 
   adapter: lazyDrizzleAdapter(),
+
+  /*
+   * Phone sign-in.
+   *
+   * Accepts ONE field: a ticket minted by /api/auth/otp/verify and signed with
+   * AUTH_SECRET. It deliberately does not accept a phone number — a Credentials
+   * provider is a public POST endpoint, so one that trusts `{ phone }` lets
+   * anyone sign in as anyone by typing their number.
+   *
+   * Registered unconditionally rather than behind ENABLE_PHONE_OTP: the flag
+   * gates whether codes are *sent* and whether the UI appears, and a ticket
+   * cannot exist without a verified code anyway. Adding and removing providers
+   * by env var changes the config Auth.js validates per request, which is how
+   * the MissingAdapter breakage happened before.
+   */
 
   callbacks: {
     ...authConfig.callbacks,

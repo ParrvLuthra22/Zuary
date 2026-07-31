@@ -13,11 +13,7 @@ import { RAZORPAY_CURRENCY, razorpay, toPaise } from "@/lib/razorpay/client";
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
-  const limit = rateLimit(clientIp(request), {
-    key: "create-order",
-    max: 10,
-    windowMs: 10 * 60 * 1000,
-  });
+  const limit = await rateLimit("create-order", clientIp(request));
   if (limit.limited) {
     return NextResponse.json(
       { error: "Too many attempts. Try again shortly." },
