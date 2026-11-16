@@ -2,6 +2,8 @@
 
 Storefront for ZUARY — Indian trousers cut in fixed runs.
 
+**Live:** https://zuary.vercel.app
+
 Next.js 15 (App Router) · TypeScript · Tailwind v4 · Drizzle + Neon Postgres ·
 Razorpay · Framer Motion / GSAP / Lenis · deployed on Vercel.
 
